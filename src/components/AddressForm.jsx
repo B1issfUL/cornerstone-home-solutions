@@ -57,20 +57,37 @@ function loadGoogleMaps(apiKey) {
         return;
       }
 
+      const callbackName = '__chsGoogleMapsLoaded';
       const script = document.createElement('script');
       const params = new URLSearchParams({
         key: apiKey,
-        libraries: 'places',
         v: 'weekly',
         loading: 'async',
+        callback: callbackName,
       });
+      const timeout = window.setTimeout(() => {
+        reject(new Error('Google Maps did not finish loading.'));
+      }, 12000);
+
+      window[callbackName] = () => {
+        window.clearTimeout(timeout);
+        delete window[callbackName];
+        resolve(window.google);
+      };
 
       script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
       script.async = true;
       script.defer = true;
       script.dataset.chsGoogleMaps = 'true';
-      script.addEventListener('load', () => resolve(window.google), { once: true });
-      script.addEventListener('error', reject, { once: true });
+      script.addEventListener(
+        'error',
+        () => {
+          window.clearTimeout(timeout);
+          delete window[callbackName];
+          reject(new Error('Google Maps could not load.'));
+        },
+        { once: true },
+      );
       document.head.appendChild(script);
     });
   }
