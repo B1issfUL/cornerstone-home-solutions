@@ -1,0 +1,77 @@
+.hero {
+  padding: 96px 0 104px;
+  background:
+    radial-gradient(ellipse 60% 50% at 80% 10%, rgba(124, 58, 237, 0.14), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 10% 90%, rgba(124, 58, 237, 0.08), transparent 70%);
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 64px;
+  align-items: center;
+}
+
+.hero-headline {
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+
+.hero-highlight {
+  color: var(--orange);
+}
+
+.hero-paragraph {
+  color: var(--text-muted);
+  font-size: 1.08rem;
+  max-width: 520px;
+  margin-bottom: 34px;
+}
+
+.hero-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin-top: 26px;
+}
+
+.hero-benefit {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.benefit-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--orange);
+  flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+  .hero {
+    padding: 72px 0 80px;
+  }
+
+  .hero-grid {
+    gap: 44px;
+  }
+}
+
+@media (max-width: 860px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-copy {
+    max-width: 620px;
+  }
+}
