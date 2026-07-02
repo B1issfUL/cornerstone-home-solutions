@@ -714,16 +714,32 @@ export default function AddressForm() {
           autocompleteSessionRef.current = new placesLibrary.AutocompleteSessionToken();
         }
 
-        const response =
-          await placesLibrary.AutocompleteSuggestion.fetchAutocompleteSuggestions({
-            input: query,
-            inputOffset: query.length,
-            includedRegionCodes: ['US'],
-            includedPrimaryTypes: ['street_address'],
-            language: 'en-US',
-            region: 'us',
-            sessionToken: autocompleteSessionRef.current,
-          });
+        const suggestionRequest = {
+          input: query,
+          inputOffset: query.length,
+          includedRegionCodes: ['US'],
+          includedPrimaryTypes: ['street_address'],
+          language: 'en-US',
+          region: 'us',
+          sessionToken: autocompleteSessionRef.current,
+        };
+
+        let response;
+
+        try {
+          response =
+            await placesLibrary.AutocompleteSuggestion.fetchAutocompleteSuggestions(
+              suggestionRequest,
+            );
+        } catch {
+          const fallbackRequest = { ...suggestionRequest };
+          delete fallbackRequest.includedPrimaryTypes;
+
+          response =
+            await placesLibrary.AutocompleteSuggestion.fetchAutocompleteSuggestions(
+              fallbackRequest,
+            );
+        }
 
         if (requestSequenceRef.current !== requestId) return;
 
