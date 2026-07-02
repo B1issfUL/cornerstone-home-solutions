@@ -717,8 +717,11 @@ export default function AddressForm() {
         const response =
           await placesLibrary.AutocompleteSuggestion.fetchAutocompleteSuggestions({
             input: query,
-            includedRegionCodes: ['us'],
+            inputOffset: query.length,
+            includedRegionCodes: ['US'],
             includedPrimaryTypes: ['street_address'],
+            language: 'en-US',
+            region: 'us',
             sessionToken: autocompleteSessionRef.current,
           });
 
