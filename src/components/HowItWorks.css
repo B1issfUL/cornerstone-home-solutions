@@ -1,0 +1,59 @@
+.how-it-works {
+  border-top: 1px solid var(--border);
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  list-style: none;
+  counter-reset: none;
+}
+
+.step-card {
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(249, 115, 22, 0.14);
+  border: 1px solid rgba(249, 115, 22, 0.45);
+  color: var(--orange);
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.step-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.step-description {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 900px) {
+  .steps-grid {
+    gap: 16px;
+  }
+
+  .step-card {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 700px) {
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+}
