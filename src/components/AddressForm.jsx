@@ -7,8 +7,6 @@ const PHONE_HREF = 'tel:+17372050102';
 const FORM_SUBJECT = 'New Cash Home Seller Lead';
 const SUBMISSION_COOLDOWN_MS = 60_000;
 const MIN_REVIEW_TIME_MS = 2_000;
-const PLACES_AUTOCOMPLETE_URL = 'https://places.googleapis.com/v1/places:autocomplete';
-const PLACES_DETAILS_BASE_URL = 'https://places.googleapis.com/v1/places';
 
 const FORM_DEFAULTS = {
   name: '',
@@ -20,9 +18,7 @@ const FORM_DEFAULTS = {
   _gotcha: '',
 };
 
-function getPredictionText(placePrediction) {
-  return placePrediction?.text?.text || placePrediction?.text?.toString?.() || '';
-}
+let googleMapsPromise;
 
 function LocationIcon() {
   return (
@@ -46,57 +42,58 @@ function LocationIcon() {
   );
 }
 
-async function fetchPlaceSuggestions(input, apiKey) {
-  const response = await fetch(PLACES_AUTOCOMPLETE_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Goog-Api-Key': apiKey,
-      'X-Goog-FieldMask':
-        'suggestions.placePrediction.place,suggestions.placePrediction.placeId,suggestions.placePrediction.text',
-    },
-    body: JSON.stringify({
-      input,
-      includedRegionCodes: ['us'],
-      languageCode: 'en-US',
-      regionCode: 'US',
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error('Places autocomplete failed.');
+function loadGoogleMaps(apiKey) {
+  if (window.google?.maps?.importLibrary) {
+    return Promise.resolve(window.google);
   }
 
-  const data = await response.json();
+  if (!googleMapsPromise) {
+    googleMapsPromise = new Promise((resolve, reject) => {
+      const existingScript = document.querySelector('script[data-chs-google-maps]');
 
-  return Array.from(data.suggestions || [])
-    .map((suggestion) => suggestion.placePrediction)
-    .filter(Boolean)
-    .map((placePrediction, index) => ({
-      id: `address-suggestion-${index}`,
-      label: getPredictionText(placePrediction),
-      placeId: placePrediction.placeId || placePrediction.place?.replace(/^places\//, '') || '',
-      placeResourceName: placePrediction.place || '',
-    }))
-    .filter((suggestion) => suggestion.label && suggestion.placeId);
-}
+      if (existingScript) {
+        existingScript.addEventListener('load', () => resolve(window.google), { once: true });
+        existingScript.addEventListener('error', reject, { once: true });
+        return;
+      }
 
-async function fetchPlaceDetails(suggestion, apiKey) {
-  const placeId = suggestion.placeId || suggestion.placeResourceName?.replace(/^places\//, '');
-  const url = `${PLACES_DETAILS_BASE_URL}/${encodeURIComponent(placeId)}`;
+      const callbackName = '__chsGoogleMapsLoaded';
+      const script = document.createElement('script');
+      const params = new URLSearchParams({
+        key: apiKey,
+        v: 'weekly',
+        loading: 'async',
+        libraries: 'places',
+        callback: callbackName,
+      });
+      const timeout = window.setTimeout(() => {
+        reject(new Error('Google Maps did not finish loading.'));
+      }, 12000);
 
-  const response = await fetch(url, {
-    headers: {
-      'X-Goog-Api-Key': apiKey,
-      'X-Goog-FieldMask': 'id,formattedAddress,addressComponents,location',
-    },
-  });
+      window[callbackName] = () => {
+        window.clearTimeout(timeout);
+        delete window[callbackName];
+        resolve(window.google);
+      };
 
-  if (!response.ok) {
-    throw new Error('Place details failed.');
+      script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
+      script.async = true;
+      script.defer = true;
+      script.dataset.chsGoogleMaps = 'true';
+      script.addEventListener(
+        'error',
+        () => {
+          window.clearTimeout(timeout);
+          delete window[callbackName];
+          reject(new Error('Google Maps could not load.'));
+        },
+        { once: true },
+      );
+      document.head.appendChild(script);
+    });
   }
 
-  return response.json();
+  return googleMapsPromise;
 }
 
 function getAddressComponent(components, type, key = 'longText') {
@@ -598,14 +595,9 @@ function LeadModal(props) {
 
 export default function AddressForm() {
   const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const googlePlacesApiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
-  const addressSearchApiKey = googlePlacesApiKey || googleMapsApiKey;
   const formspreeFormId = import.meta.env.VITE_FORMSPREE_FORM_ID;
-  const [mapsStatus, setMapsStatus] = useState(addressSearchApiKey ? 'ready' : 'error');
+  const [mapsStatus, setMapsStatus] = useState(googleMapsApiKey ? 'loading' : 'error');
   const [addressText, setAddressText] = useState('');
-  const [addressSuggestions, setAddressSuggestions] = useState([]);
-  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
-  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [verifiedAddress, setVerifiedAddress] = useState(null);
   const [addressTouched, setAddressTouched] = useState(false);
   const [addressError, setAddressError] = useState('');
@@ -616,10 +608,11 @@ export default function AddressForm() {
   const [modalOpen, setModalOpen] = useState(false);
   const [successMessageVisible, setSuccessMessageVisible] = useState(false);
   const addressInputRef = useRef(null);
+  const autocompleteContainerRef = useRef(null);
+  const placeAutocompleteRef = useRef(null);
   const phoneRef = useRef(null);
   const emailRef = useRef(null);
   const getOfferButtonRef = useRef(null);
-  const suggestionRequestRef = useRef(0);
 
   const phoneValid = useMemo(() => isValidPhone(phone), [phone]);
   const emailValid = useMemo(() => isValidEmail(email), [email]);
@@ -627,62 +620,113 @@ export default function AddressForm() {
   const canContinue = mapsStatus === 'ready' && addressValid && phoneValid && emailValid;
 
   useEffect(() => {
-    if (!addressSearchApiKey) {
+    if (!googleMapsApiKey) {
       setMapsStatus('error');
       setAddressError('Address search is temporarily unavailable. Please try again or call.');
       return;
     }
 
-    setMapsStatus('ready');
-    setAddressError('');
-  }, [addressSearchApiKey]);
-
-  useEffect(() => {
-    const query = addressText.trim();
-
-    if (
-      mapsStatus !== 'ready' ||
-      !addressSearchApiKey ||
-      verifiedAddress?.formattedAddress === addressText
-    ) {
-      setAddressSuggestions([]);
-      setSuggestionsOpen(false);
-      setActiveSuggestionIndex(-1);
-      return undefined;
-    }
-
-    if (query.length < 5) {
-      setAddressSuggestions([]);
-      setSuggestionsOpen(false);
-      setActiveSuggestionIndex(-1);
-      return undefined;
-    }
-
     let cancelled = false;
-    const requestId = ++suggestionRequestRef.current;
-    const timer = window.setTimeout(async () => {
+    let placeAutocomplete;
+    let inputListener;
+    let selectListener;
+    let legacySelectListener;
+
+    const handleTypedAddress = () => {
+      const currentValue = placeAutocomplete?.value || '';
+
+      setAddressText(currentValue);
+      setVerifiedAddress(null);
+      setAddressTouched(true);
+      setSuccessMessageVisible(false);
+      setAddressError(
+        currentValue.trim() ? 'Select your property address from the suggestions before continuing.' : '',
+      );
+    };
+
+    const handlePlaceSelect = async (event) => {
       try {
-        const nextSuggestions = await fetchPlaceSuggestions(query, addressSearchApiKey);
+        const placePrediction = event.placePrediction || event.detail?.placePrediction;
+        const place = placePrediction?.toPlace?.();
 
-        if (cancelled || requestId !== suggestionRequestRef.current) return;
+        if (!place) {
+          setVerifiedAddress(null);
+          setAddressError('Please select a complete property address from the suggestions.');
+          return;
+        }
 
-        setAddressSuggestions(nextSuggestions);
-        setSuggestionsOpen(nextSuggestions.length > 0);
-        setActiveSuggestionIndex(nextSuggestions.length > 0 ? 0 : -1);
+        await place.fetchFields({
+          fields: ['id', 'formattedAddress', 'addressComponents', 'location'],
+        });
+
+        if (cancelled) return;
+
+        const normalizedPlace = normalizePlace(place);
+        const nextAddressText =
+          normalizedPlace.formattedAddress || placeAutocomplete?.value || addressText;
+
+        setVerifiedAddress(normalizedPlace.isValid ? normalizedPlace : null);
+        setAddressText(nextAddressText);
+        setAddressTouched(true);
+        setSuccessMessageVisible(false);
+        setAddressError(
+          normalizedPlace.isValid
+            ? ''
+            : 'Please select a complete property address from the suggestions.',
+        );
       } catch {
-        if (cancelled || requestId !== suggestionRequestRef.current) return;
-        setAddressSuggestions([]);
-        setSuggestionsOpen(false);
-        setActiveSuggestionIndex(-1);
-        setAddressError('Address search is temporarily unavailable. Please try again or call.');
+        if (!cancelled) {
+          setVerifiedAddress(null);
+          setAddressError('Please select a complete property address from the suggestions.');
+        }
       }
-    }, 250);
+    };
+
+    loadGoogleMaps(googleMapsApiKey)
+      .then(async () => {
+        const { PlaceAutocompleteElement } = await window.google.maps.importLibrary('places');
+
+        if (cancelled || !autocompleteContainerRef.current) return;
+
+        placeAutocomplete = new PlaceAutocompleteElement();
+        placeAutocomplete.id = 'property-address';
+        placeAutocomplete.placeholder = 'Enter your property address';
+        placeAutocomplete.includedRegionCodes = ['us'];
+        placeAutocomplete.className = 'address-autocomplete-element';
+        placeAutocomplete.setAttribute('aria-describedby', 'address-error privacy-note');
+        placeAutocomplete.setAttribute('aria-invalid', 'false');
+
+        inputListener = handleTypedAddress;
+        selectListener = handlePlaceSelect;
+        legacySelectListener = handlePlaceSelect;
+
+        placeAutocomplete.addEventListener('input', inputListener);
+        placeAutocomplete.addEventListener('gmp-select', selectListener);
+        placeAutocomplete.addEventListener('gmp-placeselect', legacySelectListener);
+
+        autocompleteContainerRef.current.replaceChildren(placeAutocomplete);
+        placeAutocompleteRef.current = placeAutocomplete;
+        addressInputRef.current = placeAutocomplete;
+
+        setMapsStatus('ready');
+        setAddressError('');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setMapsStatus('error');
+        setAddressError('Address search is temporarily unavailable. Please try again or call.');
+      });
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
+      if (placeAutocomplete) {
+        placeAutocomplete.removeEventListener('input', inputListener);
+        placeAutocomplete.removeEventListener('gmp-select', selectListener);
+        placeAutocomplete.removeEventListener('gmp-placeselect', legacySelectListener);
+        placeAutocomplete.remove();
+      }
     };
-  }, [addressSearchApiKey, addressText, mapsStatus, verifiedAddress?.formattedAddress]);
+  }, [googleMapsApiKey]);
 
   const phoneError =
     (touched.phone || startAttempted) && !phoneValid
@@ -695,6 +739,13 @@ export default function AddressForm() {
     addressError ||
     (startAttempted && !addressValid ? 'Please select a complete property address from the suggestions.' : '');
   const addressSearchUnavailable = displayedAddressError.startsWith('Address search is temporarily unavailable');
+
+  useEffect(() => {
+    placeAutocompleteRef.current?.setAttribute(
+      'aria-invalid',
+      displayedAddressError ? 'true' : 'false',
+    );
+  }, [displayedAddressError]);
 
   const focusFirstInvalidField = () => {
     if (!addressValid) {
@@ -709,56 +760,6 @@ export default function AddressForm() {
 
     if (!emailValid) {
       emailRef.current?.focus();
-    }
-  };
-
-  const selectAddressSuggestion = async (suggestion) => {
-    if (!suggestion?.placeId || !addressSearchApiKey) return;
-
-    setAddressError('');
-
-    try {
-      const place = await fetchPlaceDetails(suggestion, addressSearchApiKey);
-      const normalizedPlace = normalizePlace(place);
-
-      setVerifiedAddress(normalizedPlace.isValid ? normalizedPlace : null);
-      setAddressText(normalizedPlace.formattedAddress || suggestion.label);
-      setAddressTouched(true);
-      setAddressSuggestions([]);
-      setSuggestionsOpen(false);
-      setActiveSuggestionIndex(-1);
-      setAddressError(
-        normalizedPlace.isValid
-          ? ''
-          : 'Please select a complete property address from the suggestions.',
-      );
-    } catch {
-      setVerifiedAddress(null);
-      setAddressError('Please select a complete property address from the suggestions.');
-    }
-  };
-
-  const handleAddressKeyDown = (event) => {
-    if (!suggestionsOpen || addressSuggestions.length === 0) {
-      return;
-    }
-
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      setActiveSuggestionIndex((current) => (current + 1) % addressSuggestions.length);
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      setActiveSuggestionIndex(
-        (current) => (current <= 0 ? addressSuggestions.length - 1 : current - 1),
-      );
-    } else if (event.key === 'Enter') {
-      event.preventDefault();
-      const selectedSuggestion =
-        addressSuggestions[Math.max(activeSuggestionIndex, 0)] || addressSuggestions[0];
-      selectAddressSuggestion(selectedSuggestion);
-    } else if (event.key === 'Escape') {
-      setSuggestionsOpen(false);
-      setActiveSuggestionIndex(-1);
     }
   };
 
@@ -796,6 +797,9 @@ export default function AddressForm() {
     setEmail('');
     setTouched({ phone: false, email: false });
     setStartAttempted(false);
+    if (placeAutocompleteRef.current) {
+      placeAutocompleteRef.current.value = '';
+    }
     window.setTimeout(() => getOfferButtonRef.current?.focus(), 0);
   };
 
@@ -809,81 +813,16 @@ export default function AddressForm() {
               className={`input-shell places-shell ${displayedAddressError ? 'input-shell-error' : ''}`}
             >
               <LocationIcon />
-              <input
-                id="property-address"
-                ref={addressInputRef}
-                name="property_address_search"
-                type="text"
-                className="address-input"
-                placeholder={
-                  mapsStatus === 'loading'
-                    ? 'Loading address search...'
-                    : 'Enter your property address'
-                }
-                autoComplete="street-address"
-                required
-                disabled={mapsStatus !== 'ready'}
-                value={addressText}
-                onFocus={() => {
-                  if (addressSuggestions.length > 0) {
-                    setSuggestionsOpen(true);
-                  }
-                }}
-                onBlur={() => {
-                  window.setTimeout(() => setSuggestionsOpen(false), 120);
-                }}
-                onKeyDown={handleAddressKeyDown}
-                onChange={(event) => {
-                  setAddressText(event.target.value);
-                  setVerifiedAddress(null);
-                  setAddressSuggestions([]);
-                  setSuggestionsOpen(false);
-                  setActiveSuggestionIndex(-1);
-                  setAddressTouched(true);
-                  setSuccessMessageVisible(false);
-                  setAddressError(
-                    event.target.value.trim()
-                      ? 'Select your property address from the suggestions before continuing.'
-                      : '',
-                  );
-                }}
-                aria-invalid={Boolean(displayedAddressError)}
-                aria-autocomplete="list"
-                aria-expanded={suggestionsOpen}
-                aria-controls="address-suggestions"
-                aria-activedescendant={
-                  suggestionsOpen && activeSuggestionIndex >= 0
-                    ? addressSuggestions[activeSuggestionIndex]?.id
-                    : undefined
-                }
-                aria-describedby="address-error privacy-note"
-              />
-            </div>
-            {suggestionsOpen && addressSuggestions.length > 0 && (
-              <div className="address-suggestions-panel">
-                <ul className="address-suggestions" id="address-suggestions" role="listbox">
-                  {addressSuggestions.map((suggestion, index) => (
-                    <li
-                      id={suggestion.id}
-                      key={`${suggestion.id}-${suggestion.label}`}
-                      role="option"
-                      aria-selected={index === activeSuggestionIndex}
-                    >
-                      <button
-                        type="button"
-                        className="address-suggestion-button"
-                        onMouseDown={(event) => event.preventDefault()}
-                        onMouseEnter={() => setActiveSuggestionIndex(index)}
-                        onClick={() => selectAddressSuggestion(suggestion)}
-                      >
-                        {suggestion.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                <div className="address-suggestions-attribution">Powered by Google</div>
+              <div
+                ref={autocompleteContainerRef}
+                className="address-autocomplete-host"
+                aria-busy={mapsStatus === 'loading'}
+              >
+                {mapsStatus === 'loading' && (
+                  <span className="address-loading-text">Loading address search...</span>
+                )}
               </div>
-            )}
+            </div>
             {displayedAddressError && (
               <p className="feedback-error" id="address-error">
                 {addressSearchUnavailable ? (
