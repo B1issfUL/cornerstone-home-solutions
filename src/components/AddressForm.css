@@ -92,26 +92,28 @@
   flex-shrink: 0;
 }
 
-.places-autocomplete-host {
+.address-input {
   flex: 1;
   min-width: 0;
-  min-height: 46px;
-  display: flex;
-  align-items: center;
-}
-
-.places-autocomplete-host gmp-place-autocomplete {
-  display: block;
-  width: 100%;
-  min-width: 0;
+  border: 0;
+  background: transparent;
   color: var(--text);
-  color-scheme: dark;
+  font: inherit;
+  font-weight: 500;
+  padding: 12px 0;
 }
 
-.places-loading {
+.address-input::placeholder {
   color: var(--text-muted);
-  font-size: 0.95rem;
-  font-weight: 500;
+}
+
+.address-input:focus {
+  outline: none;
+}
+
+.address-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
 }
 
 .form-submit {
@@ -173,6 +175,34 @@
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.pac-container {
+  z-index: 10000;
+  background-color: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-family: var(--font-sans);
+  margin-top: 6px;
+}
+
+.pac-item {
+  border-top-color: var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 9px 12px;
+}
+
+.pac-item:hover,
+.pac-item-selected {
+  background-color: rgba(124, 58, 237, 0.18);
+}
+
+.pac-item-query,
+.pac-matched {
+  color: var(--text);
 }
 
 .lead-modal-backdrop {
