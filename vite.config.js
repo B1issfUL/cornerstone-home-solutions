@@ -2,6 +2,6 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  base: '/crescent-home-solutions/',
+  base: '/cornerstone-home-solutions/',
   plugins: [react()],
 });
