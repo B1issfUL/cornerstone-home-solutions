@@ -77,7 +77,7 @@ VITE_FIREBASE_APP_ID=your_firebase_app_id
 Admin URL:
 
 ```text
-https://b1issful.github.io/cornerstone-home-solutions/#/admin
+https://stonecornerhome.com/#/admin
 ```
 
 The dashboard uses Firebase Google sign-in and only allows this email to edit stats:
