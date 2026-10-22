@@ -51,6 +51,7 @@ export const translations = {
     },
     stats: {
       aria: 'Property review status',
+      placeholderNote: 'Live statistics unavailable. Values shown are placeholders.',
       title: 'Property Review Status',
       syncing: 'Syncing',
       ready: 'Ready',
@@ -262,6 +263,7 @@ export const translations = {
     },
     stats: {
       aria: 'Estado de revisión de la propiedad',
+      placeholderNote: 'Estadísticas en vivo no disponibles. Se muestran valores de ejemplo.',
       title: 'Estado de revisión de la propiedad',
       syncing: 'Sincronizando',
       ready: 'Listo',

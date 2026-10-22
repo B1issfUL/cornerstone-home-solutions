@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import Header from './components/Header.jsx';
 import Hero from './components/Hero.jsx';
 import HowItWorks from './components/HowItWorks.jsx';
@@ -6,6 +6,9 @@ import Benefits from './components/Benefits.jsx';
 import Contact from './components/Contact.jsx';
 import Footer from './components/Footer.jsx';
 import AdminDashboard from './components/AdminDashboard.jsx';
+import SceneBoundary from './components/SceneBoundary.jsx';
+
+const ChromeEnvironment = lazy(() => import('./components/ChromeEnvironment.jsx'));
 
 function getCurrentRoute() {
   if (typeof window === 'undefined') return 'home';
@@ -37,7 +40,10 @@ export default function App() {
       {route === 'admin' ? (
         <AdminDashboard />
       ) : (
-        <main>
+        <main className="public-site">
+          <SceneBoundary>
+            <Suspense fallback={null}><ChromeEnvironment /></Suspense>
+          </SceneBoundary>
           <Hero />
           <HowItWorks />
           <Benefits />

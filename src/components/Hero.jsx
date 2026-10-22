@@ -21,20 +21,24 @@ export default function Hero() {
             {t('hero.paragraph')}
           </p>
 
-          <AddressForm />
-
-          <ul className="hero-benefits" aria-label={t('hero.benefitsAria')}>
+          <div className="hero-intake">
+            <AddressForm />
+            <ul className="hero-benefits" aria-label={t('hero.benefitsAria')}>
             {heroBenefits.map((benefit) => (
               <li key={benefit} className="hero-benefit">
                 <span className="benefit-dot" aria-hidden="true" />
                 {benefit}
               </li>
             ))}
-          </ul>
+            </ul>
+          </div>
         </div>
 
         <StatisticsPanel />
       </div>
+      <a className="hero-scroll" href="#how-it-works" aria-label={t('nav.howItWorks')}>
+        <span aria-hidden="true" />
+      </a>
     </section>
   );
 }

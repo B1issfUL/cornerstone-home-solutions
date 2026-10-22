@@ -28,6 +28,10 @@ export default function StatisticsPanel() {
         ))}
       </div>
 
+      {status !== 'ready' && status !== 'loading' && (
+        <p className="stats-placeholder-note">{t('stats.placeholderNote')}</p>
+      )}
+
       <div className="stats-divider" role="presentation" />
 
       <h3 className="options-title">{t('stats.purchaseMethod')}</h3>

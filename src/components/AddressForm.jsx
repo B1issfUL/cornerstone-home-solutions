@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useForm, ValidationError } from '@formspree/react';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 import './AddressForm.css';
@@ -1263,7 +1264,7 @@ export default function AddressForm() {
         )}
       </div>
 
-      {modalOpen && verifiedAddress && (
+      {modalOpen && verifiedAddress && createPortal(
         formspreeFormId ? (
           <FormspreeLeadModal
             formspreeFormId={formspreeFormId}
@@ -1283,7 +1284,8 @@ export default function AddressForm() {
             onChangeAddress={handleChangeAddress}
             onSuccess={handleSuccess}
           />
-        )
+        ),
+        document.body,
       )}
     </div>
   );
