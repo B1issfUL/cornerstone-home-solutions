@@ -1,5 +1,6 @@
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 import './HowItWorks.css';
+import RevealWords from './RevealWords.jsx';
 
 export default function HowItWorks() {
   const { t } = useLanguage();
@@ -8,11 +9,13 @@ export default function HowItWorks() {
   return (
     <section className="section how-it-works" id="how-it-works">
       <div className="container" data-reveal>
+        <div className="section-intro">
         <span className="eyebrow">{t('howItWorks.eyebrow')}</span>
-        <h2 className="section-title">{t('howItWorks.title')}</h2>
+        <h2 className="section-title"><RevealWords>{t('howItWorks.title')}</RevealWords></h2>
         <p className="section-subtitle">
           {t('howItWorks.subtitle')}
         </p>
+        </div>
 
         <ol className="steps-grid" data-reveal>
           {steps.map((step, index) => (

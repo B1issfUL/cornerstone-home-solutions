@@ -5,6 +5,7 @@ import lightPlateUrl from '../assets/crystals/crystals-light.webp';
 import darkPlateUrl from '../assets/crystals/crystals-dark.webp';
 import depthMapUrl from '../assets/crystals/crystals-depth.webp';
 import { pointer } from '../lib/pointer.js';
+import { flow } from '../lib/flow.js';
 
 /*
   Hybrid crystal environment.
@@ -34,6 +35,7 @@ const plateFragment = `
   uniform float uGlint;
   uniform float uImageAspect;
   uniform float uVeil;
+  uniform float uBend;
   uniform vec2 uVisible;
   uniform vec2 uFocus;
   uniform vec2 uShift;
@@ -58,6 +60,7 @@ const plateFragment = `
     float depth = texture2D(uAux, uv).r;
     vec2 drift = vec2(sin(uTime * 0.31 + depth * 5.0), cos(uTime * 0.23 + depth * 4.0)) * 0.0016 * depth;
     vec2 p = uv - uShift * (depth - 0.3) - drift;
+    p += vec2(sin(p.y * 7.0 + uTime * 0.35), cos(p.x * 6.0 - uTime * 0.25)) * uBend * depth;
     p = turn(p, uCenter, uAngle * texture2D(uAux, p).b);
     vec3 aux = texture2D(uAux, p).rgb;
     vec3 col = mix(texture2D(uLight, p).rgb, texture2D(uDark, p).rgb, uMix);
@@ -178,6 +181,7 @@ export default function ChromeEnvironment() {
       uLight: { value: null }, uDark: { value: null }, uAux: { value: null },
       uMix: { value: 0 }, uTime: { value: 0 }, uAngle: { value: 0 }, uGlint: { value: 1 },
       uImageAspect: { value: IMAGE_SIZE.x / IMAGE_SIZE.y }, uVeil: { value: 0.22 },
+      uBend: { value: 0 },
       uVisible: { value: new THREE.Vector2(1, 1) }, uFocus: { value: new THREE.Vector2(0.5, 0.5) },
       uShift: { value: new THREE.Vector2() }, uCenter: { value: FORMATION_CENTER.clone() },
     };
@@ -203,7 +207,7 @@ export default function ChromeEnvironment() {
     };
     const fragments = [];
     const layout = [
-      // x, y, z, size — kept to the right half and the top/bottom margins so the copy stays clear
+      // x, y, z, size, kept to the right half and the top/bottom margins so the copy stays clear
       [2.4, 3.5, 0.6, 0.36], [7.9, 3.2, 0.8, 0.44], [9.1, -1.0, 0.2, 0.32], [5.2, -4.4, 1.0, 0.4],
       [0.4, -4.6, -0.6, 0.3], [-9.6, 3.9, -1.2, 0.26], [9.6, 1.6, -1.0, 0.28], [-9.2, 1.4, 0.4, 0.34],
     ];
@@ -252,11 +256,18 @@ export default function ChromeEnvironment() {
     let frame = 0; let lastTime = 0; let motionTime = 0; let lastRenderTime = 0;
     let needsRender = true;
 
+    const requestRender = () => {
+      if (!disposed && ready && !frame && !document.hidden && host.dataset.renderState === 'ready') {
+        frame = requestAnimationFrame(render);
+      }
+    };
+
     const syncTheme = () => {
       const theme = document.documentElement.dataset.theme;
       dark = theme === 'dark' || (theme !== 'light' && systemDark.matches);
       renderer.toneMappingExposure = dark ? 1.05 : 1.2;
       needsRender = true;
+      requestRender();
     };
     const syncSize = () => {
       const { width, height } = host.getBoundingClientRect();
@@ -283,27 +294,29 @@ export default function ChromeEnvironment() {
       moteGeometry.setDrawRange(0, mobile ? Math.min(12, moteCount) : moteCount);
       moteUniforms.uScale.value = height * renderer.getPixelRatio() * 0.11;
       needsRender = true;
+      requestRender();
     };
 
-    const onScroll = () => { scrollTarget = window.scrollY; };
+    const onScroll = () => { scrollTarget = window.scrollY; requestRender(); };
     const onContextLost = (event) => {
       event.preventDefault();
       host.dataset.renderState = 'fallback';
       cancelAnimationFrame(frame);
+      frame = 0;
     };
     const resizeObserver = new ResizeObserver(syncSize);
     const themeObserver = new MutationObserver(syncTheme);
 
     const render = (now) => {
+      frame = 0;
       if (disposed) return;
-      frame = requestAnimationFrame(render);
-      const still = reducedMotion.matches;
+      const still = reducedMotion.matches || Boolean(navigator.connection?.saveData);
       const mixTarget = dark ? 1 : 0;
       const mixing = Math.abs(plateUniforms.uMix.value - mixTarget) > 0.002;
       if (document.hidden || (still && !needsRender && !mixing)) { lastTime = now; return; }
       // Below the hero the plate sits behind frosted sections, so 30 FPS is enough there.
       const throttled = lowPower || mobile || window.scrollY > window.innerHeight * 0.9;
-      if (throttled && now - lastRenderTime < 1000 / 30) return;
+      if (throttled && now - lastRenderTime < 1000 / 30) { requestRender(); return; }
       lastRenderTime = now;
       const dt = Math.min((now - (lastTime || now)) / 1000, 0.05);
       lastTime = now;
@@ -320,17 +333,21 @@ export default function ChromeEnvironment() {
       const px = still ? 0 : smoothX; const py = still ? 0 : smoothY;
 
       // Plate: depth parallax (pointer + scroll), formation turns with scroll and reverses on the way back up.
-      plateUniforms.uShift.value.set(px * 0.022, -py * 0.016 - scrollRatio * 0.035);
-      plateUniforms.uAngle.value = Math.sin(progress * 1.5) * 0.12;
+      const velocity = now - flow.updatedAt < 150 ? Math.abs(flow.velocity) : 0;
+      plateUniforms.uShift.value.set(px * 0.038, -py * 0.025 - scrollRatio * 0.05);
+      plateUniforms.uAngle.value = Math.sin(progress * 1.5) * 0.18 + (still ? 0 : flow.progress * 0.07);
+      const bend = still ? 0 : (mobile ? 0.0005 : 0.0014) + velocity * 0.001;
+      plateUniforms.uBend.value += (bend - plateUniforms.uBend.value) * (1 - Math.exp(-dt * 5));
       plateUniforms.uTime.value = still ? 2.0 : motionTime;
 
-      camera.position.set(px * 0.7, -py * 0.45, 17);
+      camera.position.set(px * 0.95, -py * 0.6, 17 - (still ? 0 : flow.progress * 0.65));
       camera.lookAt(0, 0, 0);
       fragments.forEach(({ mesh, x, y, rx, ry, speed, spin }, i) => {
         mesh.rotation.x = rx + progress * spin + motionTime * 0.06 * (i % 2 ? 1 : -1);
         mesh.rotation.y = ry + progress * (spin + 0.5) + motionTime * 0.05;
         mesh.position.x = x;
-        mesh.position.y = y + Math.sin(motionTime * speed + i) * 0.1 + scrollRatio * (0.6 + (i % 3) * 0.35);
+        mesh.position.x = x + Math.sin(motionTime * speed * 0.35 + i) * (still ? 0 : 0.12);
+        mesh.position.y = y + Math.sin(motionTime * speed + i) * 0.16 + scrollRatio * (0.8 + (i % 3) * 0.4);
       });
 
       moteUniforms.uScroll.value = scrollRatio;
@@ -339,6 +356,7 @@ export default function ChromeEnvironment() {
       renderer.render(scene, camera);
       host.dataset.scrollRotation = progress.toFixed(3);
       needsRender = false;
+      if (!still || mixing) requestRender();
     };
 
     const loader = new THREE.TextureLoader();
@@ -361,13 +379,21 @@ export default function ChromeEnvironment() {
         ready = true;
         resizeObserver.observe(host);
         syncSize();
-        frame = requestAnimationFrame(render);
+        requestRender();
       })
       .catch(() => { if (!disposed) host.dataset.renderState = 'fallback'; });
 
     renderer.domElement.addEventListener('webglcontextlost', onContextLost);
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     window.addEventListener('scroll', onScroll, { passive: true });
+    const onMotion = () => { needsRender = true; requestRender(); };
+    const onVisibility = () => {
+      if (document.hidden) { cancelAnimationFrame(frame); frame = 0; }
+      else { lastTime = performance.now(); onMotion(); }
+    };
+    reducedMotion.addEventListener('change', onMotion);
+    navigator.connection?.addEventListener?.('change', onMotion);
+    document.addEventListener('visibilitychange', onVisibility);
     systemDark.addEventListener('change', syncTheme);
     syncTheme();
 
@@ -375,6 +401,9 @@ export default function ChromeEnvironment() {
       disposed = true;
       cancelAnimationFrame(frame);
       window.removeEventListener('scroll', onScroll);
+      reducedMotion.removeEventListener('change', onMotion);
+      navigator.connection?.removeEventListener?.('change', onMotion);
+      document.removeEventListener('visibilitychange', onVisibility);
       systemDark.removeEventListener('change', syncTheme);
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       themeObserver.disconnect();

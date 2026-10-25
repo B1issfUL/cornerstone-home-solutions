@@ -2,6 +2,7 @@ import AddressForm from './AddressForm.jsx';
 import StatisticsPanel from './StatisticsPanel.jsx';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 import './Hero.css';
+import RevealWords from './RevealWords.jsx';
 
 export default function Hero() {
   const { t } = useLanguage();
@@ -13,9 +14,9 @@ export default function Hero() {
         <div className="hero-copy">
           <span className="eyebrow">{t('hero.eyebrow')}</span>
           <h1 className="hero-headline">
-            {t('hero.titlePrefix')} <span className="hero-highlight">{t('hero.titleHighlight')}</span>
+            <RevealWords>{t('hero.titlePrefix')}</RevealWords>{' '}<span className="hero-highlight"><RevealWords>{t('hero.titleHighlight')}</RevealWords></span>
             <br />
-            {t('hero.titleSuffix')}
+            <RevealWords>{t('hero.titleSuffix')}</RevealWords>
           </h1>
           <p className="hero-paragraph">
             {t('hero.paragraph')}

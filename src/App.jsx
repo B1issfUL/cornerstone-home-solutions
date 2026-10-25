@@ -86,6 +86,7 @@ export default function App() {
               <Suspense fallback={scenePlaceholder}><ChromeEnvironment /></Suspense>
             ) : scenePlaceholder}
           </SceneBoundary>
+          <div className="flow-atmosphere" aria-hidden="true"><div className="flow-screen" /><div className="flow-light" /></div>
           <Hero />
           <HowItWorks />
           <Benefits />

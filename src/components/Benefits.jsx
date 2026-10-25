@@ -1,5 +1,6 @@
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 import './Benefits.css';
+import RevealWords from './RevealWords.jsx';
 
 function CheckIcon() {
   return (
@@ -30,7 +31,7 @@ export default function Benefits() {
     <section className="section benefits" id="solutions">
       <div className="container" data-reveal>
         <span className="eyebrow">{t('benefits.eyebrow')}</span>
-        <h2 className="section-title">{t('benefits.title')}</h2>
+        <h2 className="section-title"><RevealWords>{t('benefits.title')}</RevealWords></h2>
         <p className="section-subtitle">
           {t('benefits.subtitle')}
         </p>
