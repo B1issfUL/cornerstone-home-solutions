@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 import { readStorage, writeStorage } from '../lib/storage.js';
+import BrandMark from './BrandMark.jsx';
 import './Header.css';
 
 const NAV_LINKS = [
@@ -19,27 +20,6 @@ function getInitialThemePreference() {
 
   const storedTheme = readStorage('localStorage', THEME_STORAGE_KEY);
   return THEME_OPTIONS.includes(storedTheme) ? storedTheme : 'system';
-}
-
-/* Simple cornerstone mark used as the placeholder logo */
-function LogoIcon() {
-  return (
-    <svg
-      width="34"
-      height="34"
-      viewBox="0 0 34 34"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <rect x="4" y="4" width="26" height="26" rx="7" fill="var(--text)" />
-      <path
-        d="M10 18.5 17 11l7 7.5v7H10v-7Z"
-        fill="var(--panel)"
-      />
-      <path d="M10 25h14" stroke="var(--orange)" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 export default function Header() {
@@ -87,7 +67,7 @@ export default function Header() {
     <header className="header" ref={headerRef}>
       <div className="container header-inner">
         <a href="#top" className="brand" onClick={closeMenu}>
-          <LogoIcon />
+          <BrandMark />
           <span className="brand-name">{t('common.brand')}</span>
         </a>
 

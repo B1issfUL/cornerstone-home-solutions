@@ -6,6 +6,7 @@ import Benefits from './components/Benefits.jsx';
 import Contact from './components/Contact.jsx';
 import Footer from './components/Footer.jsx';
 import SceneBoundary from './components/SceneBoundary.jsx';
+import useInteractiveEffects from './hooks/useInteractiveEffects.js';
 
 const ChromeEnvironment = lazy(() => import('./components/ChromeEnvironment.jsx'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard.jsx'));
@@ -45,6 +46,7 @@ function getCurrentRoute() {
 export default function App() {
   const [route, setRoute] = useState(getCurrentRoute);
   const sceneEnabled = useDeferredScene();
+  useInteractiveEffects(route);
 
   useEffect(() => {
     const handleRouteChange = () => setRoute(getCurrentRoute());

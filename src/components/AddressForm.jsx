@@ -760,7 +760,7 @@ function LeadModal(props) {
 
           <button
             type="submit"
-            className="btn-primary modal-submit"
+            className={`btn-primary modal-submit${formspreeState.submitting ? ' is-sending' : ''}`}
             disabled={submitDisabled}
             aria-disabled={submitDisabled ? 'true' : 'false'}
           >
@@ -1261,7 +1261,12 @@ export default function AddressForm() {
       <div id="form-feedback" role="status" aria-live="polite" className="form-feedback">
         {successMessageVisible && (
           <div className="feedback-success">
-            <p>{t('form.successMessage')}</p>
+            <p>
+              <svg className="feedback-check" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12.5 10 17.5 19 7" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {t('form.successMessage')}
+            </p>
             <p>
               {t('form.immediateAssistancePrefix')}{' '}
               <PhoneLink />

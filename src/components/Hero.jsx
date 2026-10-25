@@ -21,7 +21,7 @@ export default function Hero() {
             {t('hero.paragraph')}
           </p>
 
-          <div className="hero-intake">
+          <div className="hero-intake fx-card fx-card--flat">
             <AddressForm />
             <ul className="hero-benefits" aria-label={t('hero.benefitsAria')}>
             {heroBenefits.map((benefit) => (

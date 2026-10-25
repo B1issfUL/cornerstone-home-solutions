@@ -158,7 +158,7 @@
   .header-inner { height: 72px; gap: 12px; }
   .brand { gap: 8px; min-width: 0; }
   .brand-name { font-size: 0.85rem; max-width: 200px; }
-  .brand svg { width: 28px; flex-shrink: 0; }
+  .brand-mark { height: 32px; }
   .nav { top: 72px; }
   .menu-toggle { flex-shrink: 0; }
   .container { padding-left: 20px; padding-right: 20px; }

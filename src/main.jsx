@@ -4,6 +4,7 @@ import App from './App.jsx';
 import { LanguageProvider } from './i18n/LanguageContext.jsx';
 import './index.css';
 import './chrome.css';
+import './motion.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
