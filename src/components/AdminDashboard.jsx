@@ -10,6 +10,7 @@ import './AdminDashboard.css';
 const AUTHORIZED_ADMIN_EMAIL = 'chsmadesimple@gmail.com';
 const SUCCESS_MESSAGE = 'Stats updated successfully.';
 const FAILURE_MESSAGE = 'Could not update stats. Please try again.';
+const SIGN_IN_FAILURE_MESSAGE = 'Could not sign in. Please try again.';
 
 function statsToFormValues(stats) {
   const normalizedStats = normalizeHomepageStats(stats);
@@ -61,6 +62,9 @@ export default function AdminDashboard() {
     return onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
       setAuthReady(true);
+      if (nextUser) {
+        setMessage((current) => current === SIGN_IN_FAILURE_MESSAGE ? '' : current);
+      }
     });
   }, [auth]);
 
@@ -94,7 +98,7 @@ export default function AdminDashboard() {
       await signInWithPopup(auth, new GoogleAuthProvider());
     } catch (error) {
       reportError('admin.signIn', error);
-      setMessage('Could not sign in. Please try again.');
+      setMessage(SIGN_IN_FAILURE_MESSAGE);
     }
   };
 

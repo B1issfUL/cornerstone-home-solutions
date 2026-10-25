@@ -4,6 +4,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import lightPlateUrl from '../assets/crystals/crystals-light.webp';
 import darkPlateUrl from '../assets/crystals/crystals-dark.webp';
 import depthMapUrl from '../assets/crystals/crystals-depth.webp';
+import { pointer } from '../lib/pointer.js';
 
 /*
   Hybrid crystal environment.
@@ -117,6 +118,36 @@ const gemFragment = `
   }
 `;
 
+// Crystal motes (ported from Magic UI's particles idea): sparse diamond-shaped glints that drift
+// slowly and shimmer softly. Rendered by the same scene and loop as the crystals.
+const moteVertex = `
+  attribute float aSeed;
+  uniform float uTime;
+  uniform float uScale;
+  uniform float uScroll;
+  varying float vAlpha;
+  void main() {
+    vec3 p = position;
+    p.x += sin(uTime * 0.13 + aSeed * 17.0) * 0.35;
+    p.y += sin(uTime * 0.11 + aSeed * 23.0) * 0.45 + uScroll * (0.4 + aSeed * 0.8);
+    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+    gl_Position = projectionMatrix * mv;
+    gl_PointSize = uScale * (0.55 + aSeed * 0.6) / -mv.z;
+    vAlpha = 0.25 + 0.75 * pow(0.5 + 0.5 * sin(uTime * (0.5 + aSeed) + aSeed * 40.0), 4.0);
+  }
+`;
+const moteFragment = `
+  uniform float uMix;
+  varying float vAlpha;
+  void main() {
+    vec2 q = abs(gl_PointCoord - 0.5);
+    float diamond = 1.0 - smoothstep(0.32, 0.5, q.x + q.y);
+    float core = 1.0 - smoothstep(0.0, 0.22, q.x + q.y);
+    vec3 col = mix(vec3(0.78, 0.6, 0.36), vec3(1.0, 0.88, 0.68), uMix);
+    gl_FragColor = vec4(col + core * 0.25, (diamond * 0.55 + core * 0.35) * vAlpha * mix(0.55, 0.8, uMix));
+  }
+`;
+
 const loadTexture = (loader, url) => new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
 
 export default function ChromeEnvironment() {
@@ -189,15 +220,35 @@ export default function ChromeEnvironment() {
       fragments.push({ mesh, x, y, rx: mesh.rotation.x, ry: mesh.rotation.y, speed: 0.28 + (i % 5) * 0.06, spin: 0.7 + (i % 4) * 0.25 });
     });
 
+    const moteCount = lowPower ? 14 : 34;
+    const motePositions = new Float32Array(moteCount * 3);
+    const moteSeeds = new Float32Array(moteCount);
+    for (let i = 0; i < moteCount; i++) {
+      const seed = ((i * 0.6180339887) % 1);
+      moteSeeds[i] = seed;
+      // Keep the copy column (left of centre) sparse: most motes sit around the formation.
+      const x = i % 4 === 0 ? -10 + seed * 6 : -1 + ((i * 0.37) % 1) * 12;
+      motePositions.set([x, -6 + ((i * 0.713) % 1) * 12, -2 + ((i * 0.29) % 1) * 5], i * 3);
+    }
+    const moteGeometry = track(new THREE.BufferGeometry());
+    moteGeometry.setAttribute('position', new THREE.BufferAttribute(motePositions, 3));
+    moteGeometry.setAttribute('aSeed', new THREE.BufferAttribute(moteSeeds, 1));
+    const moteUniforms = { uTime: plateUniforms.uTime, uMix: plateUniforms.uMix, uScale: { value: 60 }, uScroll: { value: 0 } };
+    const motes = new THREE.Points(moteGeometry, track(new THREE.ShaderMaterial({
+      uniforms: moteUniforms, vertexShader: moteVertex, fragmentShader: moteFragment,
+      transparent: true, depthWrite: false, toneMapped: false,
+    })));
+    motes.frustumCulled = false;
+    scene.add(motes);
+
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
-    const finePointer = window.matchMedia('(pointer: fine)');
     let dark = false;
     let mobile = false;
     let ready = false;
     let scrollTarget = window.scrollY;
     let smoothScroll = scrollTarget;
-    let pointerX = 0; let pointerY = 0; let smoothX = 0; let smoothY = 0;
+    let smoothX = 0; let smoothY = 0;
     let frame = 0; let lastTime = 0; let motionTime = 0; let lastRenderTime = 0;
     let needsRender = true;
 
@@ -229,15 +280,12 @@ export default function ChromeEnvironment() {
       );
       plateUniforms.uVeil.value = mobile ? 0 : 0.42;
       fragments.forEach(({ mesh }, i) => { mesh.visible = !(mobile || lowPower) || i < 5; });
+      moteGeometry.setDrawRange(0, mobile ? Math.min(12, moteCount) : moteCount);
+      moteUniforms.uScale.value = height * renderer.getPixelRatio() * 0.11;
       needsRender = true;
     };
 
     const onScroll = () => { scrollTarget = window.scrollY; };
-    const onPointer = (event) => {
-      if (!finePointer.matches) return;
-      pointerX = event.clientX / window.innerWidth - 0.5;
-      pointerY = event.clientY / window.innerHeight - 0.5;
-    };
     const onContextLost = (event) => {
       event.preventDefault();
       host.dataset.renderState = 'fallback';
@@ -265,8 +313,8 @@ export default function ChromeEnvironment() {
       plateUniforms.uMix.value = still ? mixTarget : plateUniforms.uMix.value + (mixTarget - plateUniforms.uMix.value) * (1 - Math.exp(-dt * 4));
 
       smoothScroll += (scrollTarget - smoothScroll) * (1 - Math.exp(-dt * 7));
-      smoothX += (pointerX - smoothX) * (1 - Math.exp(-dt * 3));
-      smoothY += (pointerY - smoothY) * (1 - Math.exp(-dt * 3));
+      smoothX += (pointer.x - smoothX) * (1 - Math.exp(-dt * 3));
+      smoothY += (pointer.y - smoothY) * (1 - Math.exp(-dt * 3));
       const progress = still ? 0 : smoothScroll * 0.00055;
       const scrollRatio = still ? 0 : Math.min(smoothScroll / window.innerHeight, 1.5);
       const px = still ? 0 : smoothX; const py = still ? 0 : smoothY;
@@ -284,6 +332,8 @@ export default function ChromeEnvironment() {
         mesh.position.x = x;
         mesh.position.y = y + Math.sin(motionTime * speed + i) * 0.1 + scrollRatio * (0.6 + (i % 3) * 0.35);
       });
+
+      moteUniforms.uScroll.value = scrollRatio;
 
       renderer.clear();
       renderer.render(scene, camera);
@@ -318,7 +368,6 @@ export default function ChromeEnvironment() {
     renderer.domElement.addEventListener('webglcontextlost', onContextLost);
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('pointermove', onPointer, { passive: true });
     systemDark.addEventListener('change', syncTheme);
     syncTheme();
 
@@ -326,7 +375,6 @@ export default function ChromeEnvironment() {
       disposed = true;
       cancelAnimationFrame(frame);
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('pointermove', onPointer);
       systemDark.removeEventListener('change', syncTheme);
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       themeObserver.disconnect();

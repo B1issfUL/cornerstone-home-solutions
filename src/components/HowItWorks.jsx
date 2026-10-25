@@ -7,16 +7,17 @@ export default function HowItWorks() {
 
   return (
     <section className="section how-it-works" id="how-it-works">
-      <div className="container">
+      <div className="container" data-reveal>
         <span className="eyebrow">{t('howItWorks.eyebrow')}</span>
         <h2 className="section-title">{t('howItWorks.title')}</h2>
         <p className="section-subtitle">
           {t('howItWorks.subtitle')}
         </p>
 
-        <ol className="steps-grid">
+        <ol className="steps-grid" data-reveal>
           {steps.map((step, index) => (
-            <li key={step.title} className="step-card">
+            <li key={step.title} className="step-card fx-card">
+              <span className="step-track" aria-hidden="true" />
               <span className="step-number" aria-hidden="true">
                 {index + 1}
               </span>

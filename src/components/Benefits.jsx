@@ -28,16 +28,16 @@ export default function Benefits() {
 
   return (
     <section className="section benefits" id="solutions">
-      <div className="container">
+      <div className="container" data-reveal>
         <span className="eyebrow">{t('benefits.eyebrow')}</span>
         <h2 className="section-title">{t('benefits.title')}</h2>
         <p className="section-subtitle">
           {t('benefits.subtitle')}
         </p>
 
-        <div className="benefits-grid">
+        <div className="benefits-grid" data-reveal>
           {benefits.map((benefit) => (
-            <div key={benefit.title} className="benefit-card">
+            <div key={benefit.title} className="benefit-card fx-card">
               <span className="benefit-icon" aria-hidden="true">
                 <CheckIcon />
               </span>

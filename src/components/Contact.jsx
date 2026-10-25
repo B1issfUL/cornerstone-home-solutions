@@ -8,7 +8,7 @@ export default function Contact() {
   return (
     <section className="section contact" id="contact">
       <div className="container">
-        <div className="contact-card" id="about">
+        <div className="contact-card" id="about" data-reveal>
           <span className="eyebrow">{t('contact.eyebrow')}</span>
           <h2 className="section-title">{t('contact.title')}</h2>
           <p className="contact-statement">
