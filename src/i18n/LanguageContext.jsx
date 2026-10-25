@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { readStorage, writeStorage } from '../lib/storage.js';
 import { supportedLanguagePreferences, translations } from './translations.js';
 
 const LANGUAGE_STORAGE_KEY = 'cornerstone-language';
@@ -6,12 +7,8 @@ const LANGUAGE_STORAGE_KEY = 'cornerstone-language';
 function getInitialLanguagePreference() {
   if (typeof window === 'undefined') return 'system';
 
-  try {
-    const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    return supportedLanguagePreferences.includes(storedLanguage) ? storedLanguage : 'system';
-  } catch {
-    return 'system';
-  }
+  const storedLanguage = readStorage('localStorage', LANGUAGE_STORAGE_KEY);
+  return supportedLanguagePreferences.includes(storedLanguage) ? storedLanguage : 'system';
 }
 
 function getSystemLanguage() {
@@ -60,11 +57,7 @@ export function LanguageProvider({ children }) {
   );
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, languagePreference);
-    } catch {
-      // Storage can be unavailable in restricted browser modes; keep the in-memory choice.
-    }
+    writeStorage('localStorage', LANGUAGE_STORAGE_KEY, languagePreference);
   }, [languagePreference]);
 
   useEffect(() => {

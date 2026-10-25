@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useForm, ValidationError } from '@formspree/react';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
+import { PHONE_DISPLAY, PHONE_HREF } from '../lib/contact.js';
+import { reportError } from '../lib/diagnostics.js';
+import { readStorage, writeStorage } from '../lib/storage.js';
 import './AddressForm.css';
 
-const PHONE_DISPLAY = '(+1) 737 205 0102';
-const PHONE_HREF = 'tel:+17372050102';
 const SUBMISSION_COOLDOWN_MS = 60_000;
 const MIN_REVIEW_TIME_MS = 2_000;
 const MIN_AUTOCOMPLETE_CHARS = 3;
@@ -146,6 +147,14 @@ function MapsDebugPanel({ debugInfo }) {
         ))}
       </dl>
     </div>
+  );
+}
+
+function PhoneLink() {
+  return (
+    <a href={PHONE_HREF} className="inline-link">
+      {PHONE_DISPLAY}
+    </a>
   );
 }
 
@@ -425,6 +434,8 @@ function LeadModal(props) {
 
   useEffect(() => {
     if (formspreeState.errors) {
+      const codes = formspreeState.errors.getFormErrors?.().map((item) => item.code).filter(Boolean);
+      reportError('lead.submit', { code: codes?.join(',') || 'formspree' });
       setSubmitMessage('send_failed');
     }
   }, [formspreeState.errors]);
@@ -503,7 +514,7 @@ function LeadModal(props) {
     }
 
     const now = Date.now();
-    const lastSubmission = Number(window.sessionStorage.getItem('chs_last_submission_at') || 0);
+    const lastSubmission = Number(readStorage('sessionStorage', 'chs_last_submission_at') || 0);
 
     if (lastSubmission && now - lastSubmission < SUBMISSION_COOLDOWN_MS) {
       setSubmitMessage('cooldown');
@@ -515,7 +526,7 @@ function LeadModal(props) {
       return;
     }
 
-    window.sessionStorage.setItem('chs_last_submission_at', String(now));
+    writeStorage('sessionStorage', 'chs_last_submission_at', String(now));
     await handleFormspreeSubmit(event);
   };
 
@@ -728,9 +739,7 @@ function LeadModal(props) {
               {submitMessage === 'send_failed' ? (
                 <>
                   {t('form.modal.sendFailedPrefix')}{' '}
-                  <a href={PHONE_HREF} className="inline-link">
-                    {PHONE_DISPLAY}
-                  </a>
+                  <PhoneLink />
                   .
                 </>
               ) : (
@@ -742,9 +751,7 @@ function LeadModal(props) {
           {formspreeState.errors && submitMessage !== 'send_failed' && (
             <p className="feedback-error" aria-live="polite">
               {t('form.modal.sendFailedPrefix')}{' '}
-              <a href={PHONE_HREF} className="inline-link">
-                {PHONE_DISPLAY}
-              </a>
+              <PhoneLink />
               .
             </p>
           )}
@@ -828,12 +835,14 @@ export default function AddressForm() {
           setMapsStatus('ready');
         } catch (error) {
           if (cancelled) return;
+          reportError('maps.places', error);
           setMapsDebugError(error);
           setMapsStatus('error');
         }
       })
       .catch((error) => {
         if (cancelled) return;
+        reportError('maps.load', error);
         setMapsDebugError(error);
         setMapsStatus('error');
       });
@@ -936,6 +945,7 @@ export default function AddressForm() {
         if (suggestionRequestIdRef.current !== requestId) return;
 
         clearAddressSuggestions();
+        reportError('maps.suggestions', error);
         setMapsDebugError(error);
         setAddressError(ADDRESS_ERROR_UNAVAILABLE);
       }
@@ -973,7 +983,8 @@ export default function AddressForm() {
       setAddressTouched(true);
       setSuccessMessageVisible(false);
       resetSessionToken();
-    } catch {
+    } catch (error) {
+      reportError('maps.placeDetails', error);
       setVerifiedAddress(null);
       setAddressTouched(true);
       setAddressError(ADDRESS_ERROR_INCOMPLETE);
@@ -1167,9 +1178,7 @@ export default function AddressForm() {
                 {addressSearchUnavailable ? (
                   <>
                     {t('form.errors.addressUnavailablePrefix')}{' '}
-                    <a href={PHONE_HREF} className="inline-link">
-                      {PHONE_DISPLAY}
-                    </a>
+                    <PhoneLink />
                     .
                   </>
                 ) : (
@@ -1255,9 +1264,7 @@ export default function AddressForm() {
             <p>{t('form.successMessage')}</p>
             <p>
               {t('form.immediateAssistancePrefix')}{' '}
-              <a href={PHONE_HREF} className="inline-link">
-                {PHONE_DISPLAY}
-              </a>
+              <PhoneLink />
               .
             </p>
           </div>

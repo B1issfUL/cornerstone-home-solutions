@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { doc, getFirestore, onSnapshot } from 'firebase/firestore';
 
+// Loaded on demand (dynamic import / lazy admin route) so Firebase stays out of the main bundle.
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -11,25 +11,27 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-let firebaseServices;
+let app;
+let db;
 
 export function isFirebaseConfigured() {
-  return Object.values(firebaseConfig).every((value) => Boolean(value));
+  return Object.values(firebaseConfig).every(Boolean);
 }
 
-export function getFirebaseServices() {
-  if (!isFirebaseConfigured()) {
-    return null;
-  }
+export function getFirebaseApp() {
+  if (!isFirebaseConfigured()) return null;
+  app ??= initializeApp(firebaseConfig);
+  return app;
+}
 
-  if (!firebaseServices) {
-    const app = initializeApp(firebaseConfig);
-    firebaseServices = {
-      app,
-      auth: getAuth(app),
-      db: getFirestore(app),
-    };
-  }
+export function getStatsRef() {
+  const firebaseApp = getFirebaseApp();
+  if (!firebaseApp) return null;
+  db ??= getFirestore(firebaseApp);
+  return doc(db, 'siteSettings', 'homepageStats');
+}
 
-  return firebaseServices;
+export function subscribeToStats(onNext, onError) {
+  const statsRef = getStatsRef();
+  return statsRef ? onSnapshot(statsRef, onNext, onError) : null;
 }

@@ -1,4 +1,5 @@
 import { useLanguage } from '../i18n/LanguageContext.jsx';
+import { CONTACT_EMAIL, PHONE_DISPLAY, PHONE_HREF } from '../lib/contact.js';
 import './Contact.css';
 
 export default function Contact() {
@@ -17,14 +18,14 @@ export default function Contact() {
           <div className="contact-details">
             <div className="contact-item">
               <span className="contact-label">{t('common.phone')}</span>
-              <a href="tel:+17372050102" className="contact-value">
-                (+1) 737 205 0102
+              <a href={PHONE_HREF} className="contact-value">
+                {PHONE_DISPLAY}
               </a>
             </div>
             <div className="contact-item">
               <span className="contact-label">{t('common.email')}</span>
-              <a href="mailto:chsmadesimple@gmail.com" className="contact-value">
-                chsmadesimple@gmail.com
+              <a href={`mailto:${CONTACT_EMAIL}`} className="contact-value">
+                {CONTACT_EMAIL}
               </a>
             </div>
           </div>

@@ -1,22 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
-import { getFirebaseServices, isFirebaseConfigured } from '../lib/firebase.js';
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { serverTimestamp, setDoc } from 'firebase/firestore';
+import { reportError } from '../lib/diagnostics.js';
+import { getFirebaseApp, getStatsRef, isFirebaseConfigured, subscribeToStats } from '../lib/firebase.js';
 import { DEFAULT_HOME_STATS, normalizeHomepageStats, toWholeNumber } from '../lib/homepageStats.js';
 import './AdminDashboard.css';
 
+// UI gate only; Firestore rules (isOwner in firestore.rules) are the real authorization and must match.
 const AUTHORIZED_ADMIN_EMAIL = 'chsmadesimple@gmail.com';
 const SUCCESS_MESSAGE = 'Stats updated successfully.';
 const FAILURE_MESSAGE = 'Could not update stats. Please try again.';
-
-function getInitialFormValues() {
-  return {
-    propertiesReviewed: '0',
-    estimatedTimelineDays: '0',
-    estimatedCashOffer: '0',
-    reviewCompletePercent: '0',
-  };
-}
 
 function statsToFormValues(stats) {
   const normalizedStats = normalizeHomepageStats(stats);
@@ -40,82 +33,82 @@ function sanitizeIntegerInput(value, maxValue) {
   return String(typeof maxValue === 'number' ? Math.min(maxValue, wholeNumber) : wholeNumber);
 }
 
-function parseFormValues(values) {
-  return {
-    propertiesReviewed: toWholeNumber(values.propertiesReviewed),
-    estimatedTimelineDays: toWholeNumber(values.estimatedTimelineDays),
-    estimatedCashOffer: toWholeNumber(values.estimatedCashOffer),
-    reviewCompletePercent: Math.min(100, toWholeNumber(values.reviewCompletePercent)),
-  };
-}
-
 export default function AdminDashboard() {
-  const services = useMemo(() => getFirebaseServices(), []);
+  const auth = useMemo(() => {
+    const app = getFirebaseApp();
+    return app ? getAuth(app) : null;
+  }, []);
   const configured = isFirebaseConfigured();
   const [authReady, setAuthReady] = useState(!configured);
   const [user, setUser] = useState(null);
-  const [formValues, setFormValues] = useState(getInitialFormValues);
+  const [formValues, setFormValues] = useState(() => statsToFormValues(DEFAULT_HOME_STATS));
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [statsStatus, setStatsStatus] = useState('loading');
   const [message, setMessage] = useState('');
+  const statsReady = statsStatus === 'ready';
 
-  const authorized = Boolean(user?.email && user.email.toLowerCase() === AUTHORIZED_ADMIN_EMAIL);
-  const statsRef = useMemo(
-    () => (services?.db ? doc(services.db, 'siteSettings', 'homepageStats') : null),
-    [services?.db],
+  const authorized = Boolean(
+    user?.emailVerified && user.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL,
   );
+  const statsRef = useMemo(() => getStatsRef(), []);
 
   useEffect(() => {
-    if (!services?.auth) {
+    if (!auth) {
       return undefined;
     }
 
-    return onAuthStateChanged(services.auth, (nextUser) => {
+    return onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
       setAuthReady(true);
     });
-  }, [services?.auth]);
+  }, [auth]);
 
   useEffect(() => {
-    if (!statsRef || !authorized) {
+    if (!authorized) {
+      setStatsStatus('loading');
       return undefined;
     }
 
-    return onSnapshot(
-      statsRef,
+    return subscribeToStats(
       (snapshot) => {
+        setStatsStatus('ready');
         if (isDirty) return;
 
         const nextStats = snapshot.exists() ? normalizeHomepageStats(snapshot.data()) : DEFAULT_HOME_STATS;
         setFormValues(statsToFormValues(nextStats));
       },
-      () => {
-        if (!isDirty) {
-          setFormValues(statsToFormValues(DEFAULT_HOME_STATS));
-        }
+      (error) => {
+        reportError('admin.read', error);
+        setStatsStatus('error');
       },
-    );
-  }, [authorized, isDirty, statsRef]);
+    ) ?? undefined;
+  }, [authorized, isDirty]);
 
   const handleSignIn = async () => {
-    if (!services?.auth) return;
+    if (!auth) return;
 
     setMessage('');
 
     try {
-      await signInWithPopup(services.auth, new GoogleAuthProvider());
-    } catch {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    } catch (error) {
+      reportError('admin.signIn', error);
       setMessage('Could not sign in. Please try again.');
     }
   };
 
   const handleSignOut = async () => {
-    if (!services?.auth) return;
+    if (!auth) return;
 
-    await signOut(services.auth);
+    try {
+      await signOut(auth);
+    } catch (error) {
+      reportError('admin.signOut', error);
+    }
     setMessage('');
     setIsDirty(false);
-    setFormValues(getInitialFormValues());
+    setFormValues(statsToFormValues(DEFAULT_HOME_STATS));
   };
 
   const handleFieldChange = (event) => {
@@ -131,7 +124,7 @@ export default function AdminDashboard() {
   };
 
   const saveStats = async (nextStats) => {
-    if (!statsRef || !authorized || !user?.email) return;
+    if (!statsRef || !authorized || !user?.email || !statsReady || isSaving) return;
 
     setIsSaving(true);
     setMessage('');
@@ -149,7 +142,8 @@ export default function AdminDashboard() {
       setFormValues(statsToFormValues(nextStats));
       setIsDirty(false);
       setMessage(SUCCESS_MESSAGE);
-    } catch {
+    } catch (error) {
+      reportError('admin.save', error);
       setMessage(FAILURE_MESSAGE);
     } finally {
       setIsSaving(false);
@@ -158,7 +152,7 @@ export default function AdminDashboard() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    saveStats(parseFormValues(formValues));
+    saveStats(normalizeHomepageStats(formValues));
   };
 
   const handleReset = () => {
@@ -230,9 +224,11 @@ export default function AdminDashboard() {
               <input
                 id="propertiesReviewed"
                 name="propertiesReviewed"
+                disabled={isSaving || !statsReady}
                 type="number"
                 inputMode="numeric"
                 min="0"
+                max="1000000"
                 step="1"
                 value={formValues.propertiesReviewed}
                 onChange={handleFieldChange}
@@ -244,9 +240,11 @@ export default function AdminDashboard() {
               <input
                 id="estimatedTimelineDays"
                 name="estimatedTimelineDays"
+                disabled={isSaving || !statsReady}
                 type="number"
                 inputMode="numeric"
                 min="0"
+                max="3650"
                 step="1"
                 value={formValues.estimatedTimelineDays}
                 onChange={handleFieldChange}
@@ -258,9 +256,11 @@ export default function AdminDashboard() {
               <input
                 id="estimatedCashOffer"
                 name="estimatedCashOffer"
+                disabled={isSaving || !statsReady}
                 type="number"
                 inputMode="numeric"
                 min="0"
+                max="100000000"
                 step="1"
                 value={formValues.estimatedCashOffer}
                 onChange={handleFieldChange}
@@ -272,6 +272,7 @@ export default function AdminDashboard() {
               <input
                 id="reviewCompletePercent"
                 name="reviewCompletePercent"
+                disabled={isSaving || !statsReady}
                 type="number"
                 inputMode="numeric"
                 min="0"
@@ -281,6 +282,14 @@ export default function AdminDashboard() {
                 onChange={handleFieldChange}
               />
             </label>
+
+            {!statsReady && (
+              <p className={`admin-message ${statsStatus === 'error' ? 'error' : ''}`} role="status">
+                {statsStatus === 'error'
+                  ? 'Could not load stats. Reload before making changes.'
+                  : 'Loading current stats...'}
+              </p>
+            )}
 
             {message && (
               <p
@@ -292,14 +301,14 @@ export default function AdminDashboard() {
             )}
 
             <div className="admin-actions">
-              <button type="submit" className="btn-primary" disabled={isSaving}>
+              <button type="submit" className="btn-primary" disabled={isSaving || !statsReady}>
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
               <button
                 type="button"
                 className="admin-secondary-button"
                 onClick={handleReset}
-                disabled={isSaving}
+                disabled={isSaving || !statsReady}
               >
                 Reset to Zero
               </button>

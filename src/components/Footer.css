@@ -25,6 +25,9 @@
 }
 
 .footer-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--footer-muted);
   font-size: 0.9rem;
   transition: color 0.15s ease;

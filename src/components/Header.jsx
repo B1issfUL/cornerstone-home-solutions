@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
+import { readStorage, writeStorage } from '../lib/storage.js';
 import './Header.css';
 
 const NAV_LINKS = [
@@ -16,7 +17,7 @@ const LANGUAGE_OPTIONS = ['en', 'es', 'system'];
 function getInitialThemePreference() {
   if (typeof window === 'undefined') return 'system';
 
-  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  const storedTheme = readStorage('localStorage', THEME_STORAGE_KEY);
   return THEME_OPTIONS.includes(storedTheme) ? storedTheme : 'system';
 }
 
@@ -48,13 +49,42 @@ export default function Header() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', themePreference);
-    window.localStorage.setItem(THEME_STORAGE_KEY, themePreference);
+    writeStorage('localStorage', THEME_STORAGE_KEY, themePreference);
   }, [themePreference]);
 
+  const headerRef = useRef(null);
   const closeMenu = () => setMenuOpen(false);
 
+  // Close the mobile menu on Escape, a tap outside the header, or when the desktop layout returns.
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+
+    const desktop = window.matchMedia('(min-width: 1201px)');
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        headerRef.current?.querySelector('.menu-toggle')?.focus();
+      }
+    };
+    const handlePointerDown = (event) => {
+      if (!headerRef.current?.contains(event.target)) setMenuOpen(false);
+    };
+    const handleLayoutChange = () => {
+      if (desktop.matches) setMenuOpen(false);
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('pointerdown', handlePointerDown);
+    desktop.addEventListener('change', handleLayoutChange);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('pointerdown', handlePointerDown);
+      desktop.removeEventListener('change', handleLayoutChange);
+    };
+  }, [menuOpen]);
+
   return (
-    <header className="header">
+    <header className="header" ref={headerRef}>
       <div className="container header-inner">
         <a href="#top" className="brand" onClick={closeMenu}>
           <LogoIcon />
