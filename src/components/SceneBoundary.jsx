@@ -10,12 +10,14 @@ export default class SceneBoundary extends Component {
   }
 
   componentDidCatch(error) {
-    reportError('scene.load', error);
+    reportError(this.props.scope || 'scene.load', error);
   }
 
   render() {
     if (this.state.failed) {
-      return <div className="chrome-environment" data-render-state="fallback" aria-hidden="true" />;
+      return this.props.fallback ?? (
+        <div className="chrome-environment" data-render-state="fallback" aria-hidden="true" />
+      );
     }
     return this.props.children;
   }

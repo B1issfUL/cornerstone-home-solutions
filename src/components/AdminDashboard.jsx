@@ -44,7 +44,9 @@ export default function AdminDashboard() {
   const [formValues, setFormValues] = useState(() => statsToFormValues(DEFAULT_HOME_STATS));
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [statsStatus, setStatsStatus] = useState('loading');
   const [message, setMessage] = useState('');
+  const statsReady = statsStatus === 'ready';
 
   const authorized = Boolean(
     user?.emailVerified && user.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL,
@@ -64,11 +66,13 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!authorized) {
+      setStatsStatus('loading');
       return undefined;
     }
 
     return subscribeToStats(
       (snapshot) => {
+        setStatsStatus('ready');
         if (isDirty) return;
 
         const nextStats = snapshot.exists() ? normalizeHomepageStats(snapshot.data()) : DEFAULT_HOME_STATS;
@@ -76,9 +80,7 @@ export default function AdminDashboard() {
       },
       (error) => {
         reportError('admin.read', error);
-        if (!isDirty) {
-          setFormValues(statsToFormValues(DEFAULT_HOME_STATS));
-        }
+        setStatsStatus('error');
       },
     ) ?? undefined;
   }, [authorized, isDirty]);
@@ -122,7 +124,7 @@ export default function AdminDashboard() {
   };
 
   const saveStats = async (nextStats) => {
-    if (!statsRef || !authorized || !user?.email) return;
+    if (!statsRef || !authorized || !user?.email || !statsReady || isSaving) return;
 
     setIsSaving(true);
     setMessage('');
@@ -222,9 +224,11 @@ export default function AdminDashboard() {
               <input
                 id="propertiesReviewed"
                 name="propertiesReviewed"
+                disabled={isSaving || !statsReady}
                 type="number"
                 inputMode="numeric"
                 min="0"
+                max="1000000"
                 step="1"
                 value={formValues.propertiesReviewed}
                 onChange={handleFieldChange}
@@ -236,9 +240,11 @@ export default function AdminDashboard() {
               <input
                 id="estimatedTimelineDays"
                 name="estimatedTimelineDays"
+                disabled={isSaving || !statsReady}
                 type="number"
                 inputMode="numeric"
                 min="0"
+                max="3650"
                 step="1"
                 value={formValues.estimatedTimelineDays}
                 onChange={handleFieldChange}
@@ -250,9 +256,11 @@ export default function AdminDashboard() {
               <input
                 id="estimatedCashOffer"
                 name="estimatedCashOffer"
+                disabled={isSaving || !statsReady}
                 type="number"
                 inputMode="numeric"
                 min="0"
+                max="100000000"
                 step="1"
                 value={formValues.estimatedCashOffer}
                 onChange={handleFieldChange}
@@ -264,6 +272,7 @@ export default function AdminDashboard() {
               <input
                 id="reviewCompletePercent"
                 name="reviewCompletePercent"
+                disabled={isSaving || !statsReady}
                 type="number"
                 inputMode="numeric"
                 min="0"
@@ -273,6 +282,14 @@ export default function AdminDashboard() {
                 onChange={handleFieldChange}
               />
             </label>
+
+            {!statsReady && (
+              <p className={`admin-message ${statsStatus === 'error' ? 'error' : ''}`} role="status">
+                {statsStatus === 'error'
+                  ? 'Could not load stats. Reload before making changes.'
+                  : 'Loading current stats...'}
+              </p>
+            )}
 
             {message && (
               <p
@@ -284,14 +301,14 @@ export default function AdminDashboard() {
             )}
 
             <div className="admin-actions">
-              <button type="submit" className="btn-primary" disabled={isSaving}>
+              <button type="submit" className="btn-primary" disabled={isSaving || !statsReady}>
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
               <button
                 type="button"
                 className="admin-secondary-button"
                 onClick={handleReset}
-                disabled={isSaving}
+                disabled={isSaving || !statsReady}
               >
                 Reset to Zero
               </button>

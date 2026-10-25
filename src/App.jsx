@@ -62,7 +62,21 @@ export default function App() {
     <>
       <Header />
       {route === 'admin' ? (
-        <Suspense fallback={null}><AdminDashboard /></Suspense>
+        <SceneBoundary
+          scope="admin.load"
+          fallback={
+            <main className="section">
+              <div className="container">
+                <p role="alert">The admin dashboard could not load. Please reload to try again.</p>
+                <button type="button" className="btn-primary" onClick={() => window.location.reload()}>
+                  Retry
+                </button>
+              </div>
+            </main>
+          }
+        >
+          <Suspense fallback={null}><AdminDashboard /></Suspense>
+        </SceneBoundary>
       ) : (
         <main className="public-site">
           <SceneBoundary>
