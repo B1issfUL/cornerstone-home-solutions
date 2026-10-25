@@ -39,6 +39,9 @@
 }
 
 .contact-value {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-weight: 600;
   transition: color 0.15s ease;
   overflow-wrap: anywhere;

@@ -2,14 +2,45 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Public homepage statistics. Only the verified owner account may change them,
+    // and only with well-formed values (the site never deletes this document).
     match /siteSettings/homepageStats {
       allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.token.email == "chsmadesimple@gmail.com";
+      allow create: if isOwner()
+        && request.resource.data.keys().hasOnly(statsFields())
+        && validStats(request.resource.data);
+      allow update: if isOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(statsFields())
+        && validStats(request.resource.data);
+      allow delete: if false;
     }
 
     match /{document=**} {
       allow read, write: if false;
+    }
+
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == "chsmadesimple@gmail.com"
+        && request.auth.token.email_verified == true;
+    }
+
+    function statsFields() {
+      return ['propertiesReviewed', 'estimatedTimelineDays', 'estimatedCashOffer',
+        'reviewCompletePercent', 'updatedAt', 'updatedBy'];
+    }
+
+    function wholeNumber(value, max) {
+      return value is int && value >= 0 && value <= max;
+    }
+
+    function validStats(data) {
+      return wholeNumber(data.propertiesReviewed, 1000000)
+        && wholeNumber(data.estimatedTimelineDays, 3650)
+        && wholeNumber(data.estimatedCashOffer, 100000000)
+        && wholeNumber(data.reviewCompletePercent, 100)
+        && data.updatedAt == request.time
+        && data.updatedBy == request.auth.token.email;
     }
   }
 }

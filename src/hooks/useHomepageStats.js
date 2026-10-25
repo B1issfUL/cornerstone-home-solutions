@@ -1,43 +1,48 @@
 import { useEffect, useState } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { getFirebaseServices } from '../lib/firebase.js';
+import { reportError } from '../lib/diagnostics.js';
 import { DEFAULT_HOME_STATS, normalizeHomepageStats } from '../lib/homepageStats.js';
 
 export default function useHomepageStats() {
   const [stats, setStats] = useState(DEFAULT_HOME_STATS);
-  const [status, setStatus] = useState('fallback');
+  const [status, setStatus] = useState('loading');
 
   useEffect(() => {
-    const services = getFirebaseServices();
+    let cancelled = false;
+    let unsubscribe = null;
 
-    if (!services?.db) {
+    const fallBack = (nextStatus) => {
       setStats(DEFAULT_HOME_STATS);
-      setStatus('fallback');
-      return undefined;
-    }
+      setStatus(nextStatus);
+    };
 
-    setStatus('loading');
+    import('../lib/firebase.js')
+      .then(({ subscribeToStats }) => {
+        if (cancelled) return;
+        unsubscribe = subscribeToStats(
+          (snapshot) => {
+            if (!snapshot.exists()) {
+              fallBack('fallback');
+              return;
+            }
+            setStats(normalizeHomepageStats(snapshot.data()));
+            setStatus('ready');
+          },
+          (error) => {
+            reportError('stats.read', error);
+            fallBack('error');
+          },
+        );
+        if (!unsubscribe) fallBack('fallback');
+      })
+      .catch((error) => {
+        reportError('stats.load', error);
+        if (!cancelled) fallBack('error');
+      });
 
-    const statsRef = doc(services.db, 'siteSettings', 'homepageStats');
-    const unsubscribe = onSnapshot(
-      statsRef,
-      (snapshot) => {
-        if (!snapshot.exists()) {
-          setStats(DEFAULT_HOME_STATS);
-          setStatus('fallback');
-          return;
-        }
-
-        setStats(normalizeHomepageStats(snapshot.data()));
-        setStatus('ready');
-      },
-      () => {
-        setStats(DEFAULT_HOME_STATS);
-        setStatus('error');
-      },
-    );
-
-    return unsubscribe;
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   return { stats, status };
