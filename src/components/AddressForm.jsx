@@ -371,7 +371,10 @@ function LeadModal(props) {
         body: payload,
         signal: AbortSignal.timeout(15000),
       });
-      if (!response.ok || (await response.json())?.ok !== true) {
+      const result = response.ok ? await response.json() : null;
+      // The Formspree SDK recognizes a JSON success response by its next field.
+      if (!result || result.error || result.errors || result.ok === false ||
+          (result.ok !== true && typeof result.next !== 'string')) {
         throw new Error('Submission failed');
       }
       writeStorage('sessionStorage', 'chs_last_submission_at', String(Date.now()));
