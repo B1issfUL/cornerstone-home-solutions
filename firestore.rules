@@ -2,10 +2,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Public homepage statistics. Only the verified owner account may change them,
+    // Admin-only statistics. Only the verified owner may read or change them,
     // and only with well-formed values (the site never deletes this document).
     match /siteSettings/homepageStats {
-      allow read: if true;
+      allow get: if isOwner();
       allow create: if isOwner()
         && request.resource.data.keys().hasOnly(statsFields())
         && validStats(request.resource.data);

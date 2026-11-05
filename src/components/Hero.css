@@ -73,3 +73,7 @@
     max-width: 620px;
   }
 }
+.intake-note {
+  margin-top: 12px;
+  color: var(--text);
+}

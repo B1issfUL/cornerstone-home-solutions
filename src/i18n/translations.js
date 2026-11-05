@@ -3,7 +3,7 @@ export const translations = {
     meta: {
       title: 'Cornerstone Home Solutions | Sell Your Home As-Is',
       description:
-        'Sell your home as-is for cash with Cornerstone Home Solutions. No repairs, no commissions, and no obligation.',
+        'Email Cornerstone Home Solutions to ask about selling your home as-is for cash.',
     },
     nav: {
       primaryAria: 'Primary',
@@ -17,7 +17,7 @@ export const translations = {
     },
     common: {
       brand: 'Cornerstone Home Solutions',
-      getYourOffer: 'Get Your Offer',
+      getYourOffer: 'Email Us',
       phone: 'Phone',
       email: 'Email',
     },
@@ -40,77 +40,65 @@ export const translations = {
       },
     },
     hero: {
-      eyebrow: 'Fast and Simple Home Sales',
+      eyebrow: 'Direct Home Purchases',
       titlePrefix: 'Sell your home',
       titleHighlight: 'as-is.',
-      titleSuffix: 'On your timeline.',
+      titleSuffix: 'Start with an email.',
       paragraph:
-        'We buy homes for cash with no repairs, cleaning, commissions, or long waiting periods. Enter your address below, and our team will review the information for a cash offer.',
+        'Thinking about selling your home as-is? Email us to ask whether a direct cash sale might be an option for your property.',
       benefitsAria: 'Key benefits',
-      benefits: ['No Closing Costs', 'No Repairs Required', 'No Obligation'],
+      benefits: ['As-Is Sales', 'Cash Purchase Inquiries', 'No Obligation to Sell'],
     },
-    stats: {
-      aria: 'Property review status',
-      placeholderNote: 'Live statistics unavailable. Values shown are placeholders.',
-      title: 'Property Review Status',
-      syncing: 'Syncing',
-      ready: 'Ready',
-      purchaseMethod: 'Purchase Method',
-      purchaseOptions: ['Cash Purchase'],
-      metrics: {
-        propertiesReviewed: 'Properties Reviewed',
-        estimatedTimeline: 'Estimated Timeline',
-        estimatedCashOffer: 'Estimated Cash Offer',
-        reviewComplete: 'Review Complete',
-        days: 'Days',
-      },
+    intake: {
+      emailAction: 'Email Us About Your Property',
+      emailNote: 'A brief description and the city are enough to start. Please do not send sensitive documents.',
     },
     howItWorks: {
       eyebrow: 'Simple Process',
       title: 'How It Works',
-      subtitle: 'Three straightforward steps from your address to a real cash offer.',
+      subtitle: 'What to expect when you ask about selling your property.',
       steps: [
         {
-          title: 'Enter Your Address',
+          title: 'Email Us',
           description:
-            'Share your property address using the form above. It takes less than a minute and there is no cost.',
+            'Tell us a little about the property and what you are looking for in a sale.',
         },
         {
           title: 'We Review the Property',
           description:
-            'Our team looks over the information you provide and prepares a fair cash offer for your situation.',
+            'We review the details you share and may ask follow-up questions to see whether a purchase makes sense.',
         },
         {
-          title: 'Receive Your Cash Offer',
+          title: 'Review Any Offer',
           description:
-            'We reach out with clear cash terms. You choose the closing date that works best for you.',
+            'If we make an offer, review the price, costs, and proposed closing date before deciding.',
         },
       ],
     },
     benefits: {
       eyebrow: 'Solutions',
       title: 'Why Choose Us',
-      subtitle: 'A direct sale built around what works for you, not the market.',
+      subtitle: 'Options to discuss before deciding whether a direct sale is right for you.',
       items: [
         {
           title: 'Sell As-Is',
           description:
-            'No repairs, no cleaning, no staging. We buy properties for cash in their current condition.',
+            'Tell us about the property in its current condition. You do not need to make repairs before contacting us.',
         },
         {
-          title: 'Choose Your Closing Date',
+          title: 'Discuss Closing Timing',
           description:
-            'Close in weeks or take the time you need. The timeline is always up to you.',
+            'Let us know when you would like to close. Any closing date depends on the agreement.',
         },
         {
-          title: 'No Agent Commissions',
+          title: 'Ask About Costs',
           description:
-            'Work with us directly and keep more of your money. There are no listing fees.',
+            'Ask which costs would apply and who would pay them before agreeing to a sale.',
         },
         {
-          title: 'Simple Process',
+          title: 'Decide Before You Commit',
           description:
-            'One address, one review, one cash offer. No open houses and no drawn-out negotiations.',
+            'An email inquiry does not commit you to selling.',
         },
       ],
     },
@@ -118,104 +106,28 @@ export const translations = {
       eyebrow: 'Contact',
       title: 'Ready when you are',
       statement:
-        'Have questions before sharing your address? Reach out, and a member of our team will walk you through our cash purchase process. There is no pressure and no obligation.',
+        'Email us with questions about selling your property as-is or how a direct cash purchase works.',
     },
     footer: {
-      privacyPolicy: 'Privacy Policy',
-      terms: 'Terms',
+      privacyPolicy: 'Privacy Notice',
+      terms: 'Website Terms',
       disclaimer:
-        'Submitting an address does not guarantee an offer. Property information must be reviewed before any purchase terms are provided.',
+        'An inquiry does not guarantee an offer.',
+      privacyEmail:
+        'This website has no public inquiry form. If you email Cornerstone Home Solutions, we receive your email address and what you choose to share. We use that information to review your property inquiry, respond, and follow up about a possible purchase. Email providers handle delivery and storage. Please do not email financial records, identification documents, or other sensitive information.',
+      privacyStorage:
+        'The site uses browser storage to remember language and appearance preferences. Your browser also connects to Google Fonts to load a typeface.',
+      privacyContact: 'For privacy questions or requests about information you sent us, email',
+      termsText:
+        'This website provides general information about asking us to buy a property. It does not make an offer or set a price, closing date, or costs. Emailing us does not obligate either party to proceed. Any sale is subject to the terms of a separate purchase agreement.',
       copyright: 'All rights reserved.',
-    },
-    form: {
-      subject: 'New Cornerstone Home Solutions Lead',
-      propertyAddress: 'Property Address',
-      phoneNumber: 'Phone Number',
-      emailAddress: 'Email Address',
-      addressPlaceholder: 'Street address',
-      getMyOffer: 'Get My Offer',
-      privacyNote: 'Your information will only be used to contact you about your property.',
-      addressLoading: 'Loading address search...',
-      addressVerifying: 'Verifying address...',
-      addressVerified: 'Address verified.',
-      successMessage: 'Thank you. We received your property information and will reach out soon.',
-      immediateAssistancePrefix: 'For immediate assistance, call',
-      errors: {
-        addressIncomplete: 'Please select a complete property address from the suggestions.',
-        addressUnavailablePrefix:
-          'Address search is temporarily unavailable. Please try again or call',
-        phoneInvalid: 'Please enter a valid phone number with at least 10 digits.',
-        emailInvalid: 'Please enter a valid email address.',
-      },
-      modal: {
-        nextStep: 'Next Step',
-        title: 'Where should we contact you?',
-        closeForm: 'Close form',
-        reviewAddressNote:
-          'To change the address, choose a new suggestion from the address search.',
-        changeAddress: 'Change address',
-        fullName: 'Full Name',
-        preferredContactMethod: 'Preferred Contact Method',
-        contactOptions: {
-          phoneCall: 'Phone Call',
-          textMessage: 'Text Message',
-          email: 'Email',
-        },
-        propertyDetails: 'Additional Property Details',
-        propertyDetailsPlaceholder: 'Tell us anything we should know about the property.',
-        consent:
-          'I agree that Cornerstone Home Solutions may contact me about this property using the information I provided.',
-        notConfigured:
-          'Form submissions are not configured yet. Add the Formspree form ID before accepting leads.',
-        sending: 'Sending...',
-        submitInformation: 'Submit Information',
-        sendFailedPrefix: 'We could not send your information. Please try again or call',
-        validation: {
-          name: 'Please enter your full name.',
-          preferredContact: 'Please choose how you prefer to be contacted.',
-          consent:
-            'Please agree that Cornerstone Home Solutions may contact you about this property.',
-        },
-        messages: {
-          reviewWait: 'Please take a moment to review your information before submitting.',
-          cooldown: 'Please wait before sending another request.',
-        },
-        fieldPrefixes: {
-          name: 'Name',
-          phone: 'Phone',
-          email: 'Email',
-        },
-      },
-    },
-    mapsDebug: {
-      aria: 'Google Maps debug information',
-      title: 'Google Maps debug',
-      currentOrigin: 'Current origin',
-      currentHref: 'Current href',
-      keyExists: 'VITE_GOOGLE_MAPS_API_KEY exists',
-      keyLength: 'Key length',
-      scriptLoaded: 'Google Maps script loaded',
-      mapsExists: 'google.maps exists',
-      placesLoaded: 'Places library loaded',
-      errorName: 'Google error name',
-      errorMessage: 'Google error message',
-      errorCode: 'Google error code',
-      missingKey: 'Looks like missing key',
-      badReferrer: 'Looks like bad referrer',
-      blockedClient: 'Looks like blocked client',
-      disabledApi: 'Looks like disabled API',
-      billingIssue: 'Looks like billing issue',
-      likelyCause: 'Likely cause',
-      yes: 'yes',
-      no: 'no',
-      none: 'none',
     },
   },
   es: {
     meta: {
       title: 'Cornerstone Home Solutions | Venda su casa tal como está',
       description:
-        'Venda su casa tal como está por efectivo con Cornerstone Home Solutions. Sin reparaciones, sin comisiones y sin obligación.',
+        'Escriba a Cornerstone Home Solutions para consultar sobre la venta de su casa tal como está, en efectivo.',
     },
     nav: {
       primaryAria: 'Principal',
@@ -229,7 +141,7 @@ export const translations = {
     },
     common: {
       brand: 'Cornerstone Home Solutions',
-      getYourOffer: 'Obtener su oferta',
+      getYourOffer: 'Escríbanos',
       phone: 'Teléfono',
       email: 'Correo electrónico',
     },
@@ -252,50 +164,38 @@ export const translations = {
       },
     },
     hero: {
-      eyebrow: 'Venta de casas rápida y sencilla',
+      eyebrow: 'Compra directa de viviendas',
       titlePrefix: 'Venda su casa',
       titleHighlight: 'tal como está.',
-      titleSuffix: 'En su propio tiempo.',
+      titleSuffix: 'Empiece por correo.',
       paragraph:
-        'Compramos casas en efectivo sin reparaciones, limpieza, comisiones ni largos tiempos de espera. Ingrese su dirección abajo y nuestro equipo revisará la información para hacerle una oferta en efectivo.',
+        '¿Está pensando en vender su casa tal como está? Escríbanos para saber si una venta directa en efectivo podría ser una opción para su propiedad.',
       benefitsAria: 'Beneficios principales',
-      benefits: ['Sin costos de cierre', 'Sin reparaciones necesarias', 'Sin obligación'],
+      benefits: ['Venta tal como está', 'Consultas sobre compras en efectivo', 'Sin obligación de vender'],
     },
-    stats: {
-      aria: 'Estado de revisión de la propiedad',
-      placeholderNote: 'Estadísticas en vivo no disponibles. Se muestran valores de ejemplo.',
-      title: 'Estado de revisión de la propiedad',
-      syncing: 'Sincronizando',
-      ready: 'Listo',
-      purchaseMethod: 'Método de compra',
-      purchaseOptions: ['Compra en efectivo'],
-      metrics: {
-        propertiesReviewed: 'Propiedades revisadas',
-        estimatedTimeline: 'Tiempo estimado',
-        estimatedCashOffer: 'Oferta estimada en efectivo',
-        reviewComplete: 'Revisión completa',
-        days: 'Días',
-      },
+    intake: {
+      emailAction: 'Escríbanos sobre su propiedad',
+      emailNote: 'Para empezar basta con una breve descripción y la ciudad. No envíe documentos confidenciales.',
     },
     howItWorks: {
       eyebrow: 'Proceso sencillo',
       title: 'Cómo funciona',
-      subtitle: 'Tres pasos claros desde su dirección hasta una oferta real en efectivo.',
+      subtitle: 'Qué esperar al consultar sobre la venta de su propiedad.',
       steps: [
         {
-          title: 'Ingrese su dirección',
+          title: 'Escríbanos',
           description:
-            'Comparta la dirección de su propiedad usando el formulario de arriba. Toma menos de un minuto y no tiene costo.',
+            'Cuéntenos un poco sobre la propiedad y qué busca en una venta.',
         },
         {
           title: 'Revisamos la propiedad',
           description:
-            'Nuestro equipo revisa la información que proporciona y prepara una oferta justa en efectivo para su situación.',
+            'Revisamos los detalles que nos envíe y podemos hacerle preguntas para saber si una compra es viable.',
         },
         {
-          title: 'Reciba su oferta en efectivo',
+          title: 'Revise cualquier oferta',
           description:
-            'Nos comunicamos con términos claros en efectivo. Usted elige la fecha de cierre que más le convenga.',
+            'Si le hacemos una oferta, revise el precio, los costos y la fecha de cierre propuesta antes de decidir.',
         },
       ],
     },
@@ -303,27 +203,27 @@ export const translations = {
       eyebrow: 'Soluciones',
       title: 'Por qué elegirnos',
       subtitle:
-        'Una venta directa diseñada alrededor de lo que funciona para usted, no para el mercado.',
+        'Opciones que puede conversar con nosotros antes de decidir si le conviene una venta directa.',
       items: [
         {
           title: 'Venda tal como está',
           description:
-            'Sin reparaciones, sin limpieza y sin preparación. Compramos propiedades en efectivo en su condición actual.',
+            'Cuéntenos en qué estado se encuentra la propiedad. No necesita hacer reparaciones antes de escribirnos.',
         },
         {
-          title: 'Elija su fecha de cierre',
+          title: 'Hablemos de la fecha de cierre',
           description:
-            'Cierre en semanas o tome el tiempo que necesite. El plazo siempre depende de usted.',
+            'Díganos cuándo le gustaría cerrar la venta. La fecha de cierre dependerá de lo que se acuerde.',
         },
         {
-          title: 'Sin comisiones de agente',
+          title: 'Pregunte por los costos',
           description:
-            'Trabaje directamente con nosotros y conserve más de su dinero. No hay cargos por listado.',
+            'Pregunte qué costos se aplicarían y quién los pagaría antes de acordar una venta.',
         },
         {
-          title: 'Proceso sencillo',
+          title: 'Decida antes de comprometerse',
           description:
-            'Una dirección, una revisión y una oferta en efectivo. Sin visitas abiertas ni negociaciones largas.',
+            'Una consulta por correo no le obliga a vender.',
         },
       ],
     },
@@ -331,97 +231,21 @@ export const translations = {
       eyebrow: 'Contacto',
       title: 'Listos cuando usted lo esté',
       statement:
-        '¿Tiene preguntas antes de compartir su dirección? Comuníquese con nosotros y un miembro de nuestro equipo le explicará nuestro proceso de compra en efectivo. No hay presión ni obligación.',
+        'Escríbanos si tiene preguntas sobre la venta de su propiedad tal como está o sobre cómo funciona una compra directa en efectivo.',
     },
     footer: {
-      privacyPolicy: 'Política de privacidad',
-      terms: 'Términos',
+      privacyPolicy: 'Aviso de privacidad',
+      terms: 'Términos del sitio web',
       disclaimer:
-        'Enviar una dirección no garantiza una oferta. La información de la propiedad debe revisarse antes de proporcionar cualquier término de compra.',
+        'Una consulta no garantiza una oferta.',
+      privacyEmail:
+        'Este sitio web no tiene un formulario público de consultas. Si escribe a Cornerstone Home Solutions, recibimos su dirección de correo y lo que decida compartir. Usamos esa información para revisar su consulta sobre la propiedad, responderle y dar seguimiento a una posible compra. Los proveedores de correo electrónico se encargan de la entrega y el almacenamiento. No envíe por correo registros financieros, documentos de identidad ni otra información confidencial.',
+      privacyStorage:
+        'El sitio usa el almacenamiento del navegador para recordar sus preferencias de idioma y apariencia. Su navegador también se conecta a Google Fonts para cargar un tipo de letra.',
+      privacyContact: 'Para preguntas de privacidad o solicitudes sobre información que nos envió, escriba a',
+      termsText:
+        'Este sitio ofrece información general sobre cómo consultarnos acerca de la compra de una propiedad. No constituye una oferta ni fija un precio, una fecha de cierre ni costos. Escribirnos no obliga a ninguna de las partes a seguir adelante. Toda venta queda sujeta a los términos de un contrato de compraventa por separado.',
       copyright: 'Todos los derechos reservados.',
-    },
-    form: {
-      subject: 'Nuevo prospecto de Cornerstone Home Solutions',
-      propertyAddress: 'Dirección de la propiedad',
-      phoneNumber: 'Número de teléfono',
-      emailAddress: 'Correo electrónico',
-      addressPlaceholder: 'Dirección',
-      getMyOffer: 'Obtener mi oferta',
-      privacyNote: 'Su información solo se usará para contactarle sobre su propiedad.',
-      addressLoading: 'Cargando búsqueda de direcciones...',
-      addressVerifying: 'Verificando dirección...',
-      addressVerified: 'Dirección verificada.',
-      successMessage: 'Gracias. Recibimos la información de su propiedad y nos comunicaremos pronto.',
-      immediateAssistancePrefix: 'Para recibir ayuda inmediata, llame al',
-      errors: {
-        addressIncomplete: 'Seleccione una dirección completa de la lista de sugerencias.',
-        addressUnavailablePrefix:
-          'La búsqueda de direcciones no está disponible temporalmente. Inténtelo de nuevo o llame al',
-        phoneInvalid: 'Ingrese un número de teléfono válido con al menos 10 dígitos.',
-        emailInvalid: 'Ingrese un correo electrónico válido.',
-      },
-      modal: {
-        nextStep: 'Siguiente paso',
-        title: '¿Dónde debemos contactarle?',
-        closeForm: 'Cerrar formulario',
-        reviewAddressNote:
-          'Para cambiar la dirección, elija una nueva sugerencia desde la búsqueda de direcciones.',
-        changeAddress: 'Cambiar dirección',
-        fullName: 'Nombre completo',
-        preferredContactMethod: 'Método de contacto preferido',
-        contactOptions: {
-          phoneCall: 'Llamada telefónica',
-          textMessage: 'Mensaje de texto',
-          email: 'Correo electrónico',
-        },
-        propertyDetails: 'Detalles adicionales de la propiedad',
-        propertyDetailsPlaceholder: 'Cuéntenos cualquier detalle que debamos saber sobre la propiedad.',
-        consent:
-          'Acepto que Cornerstone Home Solutions me contacte sobre esta propiedad usando la información que proporcioné.',
-        notConfigured:
-          'Los envíos del formulario aún no están configurados. Agregue el ID de Formspree antes de aceptar prospectos.',
-        sending: 'Enviando...',
-        submitInformation: 'Enviar información',
-        sendFailedPrefix: 'No pudimos enviar su información. Inténtelo de nuevo o llame al',
-        validation: {
-          name: 'Ingrese su nombre completo.',
-          preferredContact: 'Elija cómo prefiere que le contactemos.',
-          consent:
-            'Acepte que Cornerstone Home Solutions pueda contactarle sobre esta propiedad.',
-        },
-        messages: {
-          reviewWait: 'Tómese un momento para revisar su información antes de enviarla.',
-          cooldown: 'Espere antes de enviar otra solicitud.',
-        },
-        fieldPrefixes: {
-          name: 'Nombre',
-          phone: 'Teléfono',
-          email: 'Correo',
-        },
-      },
-    },
-    mapsDebug: {
-      aria: 'Información de depuración de Google Maps',
-      title: 'Depuración de Google Maps',
-      currentOrigin: 'Origen actual',
-      currentHref: 'URL actual',
-      keyExists: 'Existe VITE_GOOGLE_MAPS_API_KEY',
-      keyLength: 'Longitud de la clave',
-      scriptLoaded: 'Script de Google Maps cargado',
-      mapsExists: 'Existe google.maps',
-      placesLoaded: 'Biblioteca Places cargada',
-      errorName: 'Nombre del error de Google',
-      errorMessage: 'Mensaje del error de Google',
-      errorCode: 'Código del error de Google',
-      missingKey: 'Parece faltar la clave',
-      badReferrer: 'Parece ser un referente incorrecto',
-      blockedClient: 'Parece ser un cliente bloqueado',
-      disabledApi: 'Parece ser una API desactivada',
-      billingIssue: 'Parece ser un problema de facturación',
-      likelyCause: 'Causa probable',
-      yes: 'sí',
-      no: 'no',
-      none: 'ninguno',
     },
   },
 };

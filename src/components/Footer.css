@@ -21,6 +21,7 @@
 
 .footer-links {
   display: flex;
+  flex-wrap: wrap;
   gap: 24px;
 }
 
@@ -47,4 +48,31 @@
 .footer-copyright {
   color: var(--footer-muted);
   font-size: 0.82rem;
+}
+
+.footer-legal {
+  display: grid;
+  gap: 24px;
+  border-top: 1px solid var(--border);
+  padding: 24px 0;
+  max-width: 72ch;
+  font-size: 0.9rem;
+}
+
+.footer-legal section {
+  scroll-margin-top: 6rem;
+}
+
+.footer-legal h2 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.footer-legal p + p {
+  margin-top: 8px;
+}
+
+.footer-legal a {
+  text-decoration: underline;
+  overflow-wrap: anywhere;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { serverTimestamp, setDoc } from 'firebase/firestore';
 import { reportError } from '../lib/diagnostics.js';
@@ -43,7 +43,10 @@ export default function AdminDashboard() {
   const [authReady, setAuthReady] = useState(!configured);
   const [user, setUser] = useState(null);
   const [formValues, setFormValues] = useState(() => statsToFormValues(DEFAULT_HOME_STATS));
-  const [isDirty, setIsDirty] = useState(false);
+  const dirty = useRef(false);
+  const saving = useRef(false);
+  const signingIn = useRef(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statsStatus, setStatsStatus] = useState('loading');
   const [message, setMessage] = useState('');
@@ -77,7 +80,7 @@ export default function AdminDashboard() {
     return subscribeToStats(
       (snapshot) => {
         setStatsStatus('ready');
-        if (isDirty) return;
+        if (dirty.current) return;
 
         const nextStats = snapshot.exists() ? normalizeHomepageStats(snapshot.data()) : DEFAULT_HOME_STATS;
         setFormValues(statsToFormValues(nextStats));
@@ -87,10 +90,12 @@ export default function AdminDashboard() {
         setStatsStatus('error');
       },
     ) ?? undefined;
-  }, [authorized, isDirty]);
+  }, [authorized]);
 
   const handleSignIn = async () => {
-    if (!auth) return;
+    if (!auth || signingIn.current) return;
+    signingIn.current = true;
+    setIsSigningIn(true);
 
     setMessage('');
 
@@ -99,6 +104,9 @@ export default function AdminDashboard() {
     } catch (error) {
       reportError('admin.signIn', error);
       setMessage(SIGN_IN_FAILURE_MESSAGE);
+    } finally {
+      signingIn.current = false;
+      setIsSigningIn(false);
     }
   };
 
@@ -111,7 +119,7 @@ export default function AdminDashboard() {
       reportError('admin.signOut', error);
     }
     setMessage('');
-    setIsDirty(false);
+    dirty.current = false;
     setFormValues(statsToFormValues(DEFAULT_HOME_STATS));
   };
 
@@ -124,11 +132,12 @@ export default function AdminDashboard() {
       [name]: sanitizeIntegerInput(value, maxValue),
     }));
     setMessage('');
-    setIsDirty(true);
+    dirty.current = true;
   };
 
   const saveStats = async (nextStats) => {
-    if (!statsRef || !authorized || !user?.email || !statsReady || isSaving) return;
+    if (!statsRef || !authorized || !user?.email || !statsReady || saving.current) return;
+    saving.current = true;
 
     setIsSaving(true);
     setMessage('');
@@ -144,12 +153,13 @@ export default function AdminDashboard() {
         { merge: true },
       );
       setFormValues(statsToFormValues(nextStats));
-      setIsDirty(false);
+      dirty.current = false;
       setMessage(SUCCESS_MESSAGE);
     } catch (error) {
       reportError('admin.save', error);
       setMessage(FAILURE_MESSAGE);
     } finally {
+      saving.current = false;
       setIsSaving(false);
     }
   };
@@ -164,12 +174,12 @@ export default function AdminDashboard() {
   };
 
   return (
-    <main className="admin-page" id="top">
+    <main className="admin-page" id="main-content" tabIndex={-1}>
       <section className="admin-shell" aria-labelledby="admin-title">
         <div className="admin-header">
           <span className="eyebrow">Private Dashboard</span>
           <h1 id="admin-title">Cornerstone Admin</h1>
-          <p>Update homepage stats</p>
+          <p>Manage internal property review statistics</p>
         </div>
 
         {!configured && (
@@ -192,7 +202,7 @@ export default function AdminDashboard() {
             <p className="admin-copy">
               Sign in with Google to access the private admin dashboard.
             </p>
-            <button type="button" className="btn-primary" onClick={handleSignIn}>
+            <button type="button" className="btn-primary" onClick={handleSignIn} disabled={isSigningIn}>
               Sign In With Google
             </button>
             {message && (
