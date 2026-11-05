@@ -120,3 +120,7 @@
 .stats-placeholder-note:empty { display: none; }
 
 .stats-panel .stat-value { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 360px) {
+  .hero .stats-panel .stats-grid { grid-template-columns: minmax(0, 1fr); }
+}
