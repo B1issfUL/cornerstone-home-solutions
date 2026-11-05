@@ -1,5 +1,18 @@
 export const translations = {
   en: {
+    stats: {
+      title: 'Property Review Statistics',
+      loading: 'Loading statistics.',
+      unavailable: 'Statistics are temporarily unavailable.',
+      cached: 'Showing the last available statistics.',
+      metrics: {
+        propertiesReviewed: 'Properties Reviewed',
+        estimatedTimeline: 'Estimated Timeline',
+        estimatedCashOffer: 'Estimated Cash Offer',
+        reviewComplete: 'Review Complete',
+        days: 'days',
+      },
+    },
     meta: {
       title: 'Cornerstone Home Solutions | Sell Your Home As-Is',
       description:
@@ -184,6 +197,19 @@ export const translations = {
     },
   },
   es: {
+    stats: {
+      title: 'Estadísticas de revisión de propiedades',
+      loading: 'Cargando estadísticas.',
+      unavailable: 'Las estadísticas no están disponibles por el momento.',
+      cached: 'Se muestran las últimas estadísticas disponibles.',
+      metrics: {
+        propertiesReviewed: 'Propiedades revisadas',
+        estimatedTimeline: 'Plazo estimado',
+        estimatedCashOffer: 'Oferta estimada en efectivo',
+        reviewComplete: 'Revisión completada',
+        days: 'días',
+      },
+    },
     meta: {
       title: 'Cornerstone Home Solutions | Venda su casa tal como está',
       description:

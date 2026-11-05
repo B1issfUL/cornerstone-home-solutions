@@ -2,10 +2,15 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Admin-only statistics. Only the verified owner may read or change them,
-    // and only with well-formed values (the site never deletes this document).
+    // Public aggregate counters only. The owner can still inspect the document
+    // if a privileged writer ever adds a field outside the public schema.
     match /siteSettings/homepageStats {
-      allow get: if isOwner();
+      allow get: if isOwner() || (
+        resource.data.keys().hasOnly(statsFields())
+        && validCounters(resource.data)
+        && resource.data.updatedAt is timestamp
+        && resource.data.updatedBy == "chsmadesimple@gmail.com"
+      );
       allow create: if isOwner()
         && request.resource.data.keys().hasOnly(statsFields())
         && validStats(request.resource.data);
@@ -35,12 +40,16 @@ service cloud.firestore {
     }
 
     function validStats(data) {
+      return validCounters(data)
+        && data.updatedAt == request.time
+        && data.updatedBy == request.auth.token.email;
+    }
+
+    function validCounters(data) {
       return wholeNumber(data.propertiesReviewed, 1000000)
         && wholeNumber(data.estimatedTimelineDays, 3650)
         && wholeNumber(data.estimatedCashOffer, 100000000)
-        && wholeNumber(data.reviewCompletePercent, 100)
-        && data.updatedAt == request.time
-        && data.updatedBy == request.auth.token.email;
+        && wholeNumber(data.reviewCompletePercent, 100);
     }
   }
 }

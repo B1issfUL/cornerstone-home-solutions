@@ -32,22 +32,23 @@ const DEFAULT_STAT_LABELS = {
   days: 'Days',
 };
 
-export function formatHomepageStats(stats, labels = DEFAULT_STAT_LABELS) {
+export function formatHomepageStats(stats, labels = DEFAULT_STAT_LABELS, locale = 'en-US') {
   const normalizedStats = normalizeHomepageStats(stats);
   const metricLabels = { ...DEFAULT_STAT_LABELS, ...labels };
-  const currencyFormatter = new Intl.NumberFormat('en-US', {
+  const currencyFormatter = new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
   });
+  const number = new Intl.NumberFormat(locale);
 
   return [
     {
-      value: String(normalizedStats.propertiesReviewed),
+      value: number.format(normalizedStats.propertiesReviewed),
       label: metricLabels.propertiesReviewed,
     },
     {
-      value: `${normalizedStats.estimatedTimelineDays} ${metricLabels.days}`,
+      value: `${number.format(normalizedStats.estimatedTimelineDays)} ${metricLabels.days}`,
       label: metricLabels.estimatedTimeline,
     },
     {

@@ -23,10 +23,13 @@ private credential for either setting.
 ## Owner dashboard
 
 `/#/admin` is the legacy Firebase owner dashboard for internal property-review
-statistics. The homepage no longer reads or displays that document. The Firebase
+statistics. The homepage reads the four public counters via a masked REST GET,
+with a five-minute cache and no public real-time listener. The Firebase
 variables in `.env.example` are browser configuration, not server credentials.
 Never put an upstream service credential in a Vite variable.
 
-The rules in `firestore.rules` allow only the verified owner to get, create or update
-the one stats document. They deny listing, deletion and other client document access.
+The rules in `firestore.rules` allow a public single-document get for the approved
+stats schema and verified owner-only writes. They deny listing, deletion and other
+client document access. The REST field mask reduces the response, not authorization;
+never store private data in that document.
 **Pages does not publish these rules.** See [release and provider checklist](SECURITY-OPERATIONS.md).
