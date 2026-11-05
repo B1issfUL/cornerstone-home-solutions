@@ -14,6 +14,7 @@
   --panel: var(--color-card);
   --orange: var(--color-accent);
   --orange-hover: var(--color-accent-hover);
+  --accent-text: #8f3300;
   --text: var(--color-text);
   --text-muted: var(--color-muted);
 
@@ -46,6 +47,7 @@
 }
 
 :root[data-theme='dark'] {
+  --accent-text: #ff9b57;
   --color-bg: #0f0f0f;
   --color-card: #1a1a1a;
   --color-text: #f9fafb;
@@ -74,6 +76,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']),
   :root[data-theme='system'] {
+    --accent-text: #ff9b57;
     --color-bg: #0f0f0f;
     --color-card: #1a1a1a;
     --color-text: #f9fafb;
@@ -186,7 +189,7 @@ ul {
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--orange);
+  color: var(--accent-text);
   margin-bottom: 14px;
 }
 
