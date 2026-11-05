@@ -1,4 +1,4 @@
-import { CONTACT_EMAIL } from '../lib/contact.js';
+import AddressForm from './AddressForm.jsx';
 import StatisticsPanel from './StatisticsPanel.jsx';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 import './Hero.css';
@@ -22,9 +22,8 @@ export default function Hero() {
             {t('hero.paragraph')}
           </p>
 
-          <div id="address-form" className="hero-intake fx-card fx-card--flat">
-            <a className="btn-primary" href={`mailto:${CONTACT_EMAIL}`}>{t('intake.emailAction')}</a>
-            <p className="intake-note">{t('intake.emailNote')}</p>
+          <div className="hero-intake fx-card fx-card--flat">
+            <AddressForm />
             <ul className="hero-benefits" aria-label={t('hero.benefitsAria')}>
             {heroBenefits.map((benefit) => (
               <li key={benefit} className="hero-benefit">

@@ -1,6 +1,31 @@
 # Security audit and provider checklist
 
-## Release decision
+## Restored intake: current operating requirements
+
+The current release restores browser Places and Formspree, not the public Firestore
+listener or personal phone. The earlier shutdown notes below are historical and do
+not authorize disabling the restored intake.
+
+- Google Cloud Credentials: use a dedicated website-restricted key for
+  `https://stonecornerhome.com/*` and `https://www.stonecornerhome.com/*` if it serves the
+  app. Restrict it to Maps JavaScript API and Places API (New); remove unnecessary
+  site/API entries after confirming usage. Do not relax restrictions for testing.
+- Google Cloud Quotas: review Autocomplete and Place Details separately; set low
+  per-method project ceilings and daily quotas only where exposed. Configure billing
+  alerts and an eligible spend cap where available. Alert delivery alone does not
+  guarantee a spending stop.
+- Formspree: confirm the recipient, enable provider-side CAPTCHA/spam filtering and
+  Restrict to Domain for `stonecornerhome.com`; test in the production browser after
+  each setting change. Referrer filtering is not authentication. Do not enable an
+  alternate CAPTCHA that needs custom markup until its client flow is implemented.
+- Strict per-visitor/IP daily quotas and trusted server-side address validation
+  are not enforced by the Pages build. A hosted gateway must own Places requests
+  and atomic quota reservation and submit through a private lead channel, with
+  the old direct paths removed or independently protected against bypass. Until
+  then, browser debounce, cooldown, validation, honeypot, and consent checks are
+  user-experience protections, not a security boundary. Do not claim a hard cap.
+
+## Historical release decision (email-only build)
 
 GitHub Pages cannot run an API or enforce atomic quotas. The former browser Maps
 key, Formspree form ID, public Firestore subscription and unsupported live numeric

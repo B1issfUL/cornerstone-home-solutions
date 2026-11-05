@@ -36,15 +36,19 @@ jobs:
 
       - name: Build
         env:
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_FORMSPREE_FORM_ID: ${{ secrets.VITE_FORMSPREE_FORM_ID }}
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
-        run: npm run build
+        run: |
+          node -e 'for (const name of ["VITE_GOOGLE_MAPS_API_KEY", "VITE_FORMSPREE_FORM_ID"]) if (!process.env[name]?.trim()) throw new Error("Missing build configuration: " + name)'
+          npm run build
 
-      - name: Verify public build privacy and provider shutdown
+      - name: Verify public build contact privacy
         run: node scripts/check-public-build.mjs
 
       - name: Configure GitHub Pages

@@ -25,6 +25,7 @@ export default function Contact() {
                 </a>
               </div>
             </div>
+            <a href="#address-form" className="btn-primary contact-cta">{t('common.getYourOffer')}</a>
           </div>
         </div>
       </div>

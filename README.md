@@ -11,9 +11,14 @@ node scripts/check-public-build.mjs
 
 ## Public inquiries
 
-The website directs inquiries to the business email. It does not load Maps or Firebase
-on the homepage, collect contact details in a form, or send leads to Formspree.
-Language and appearance choices stay in browser storage.
+The on-site inquiry form uses Google Places for address selection, validates contact
+details and requires consent before submitting to Formspree. Formspree delivers to
+the configured business inbox. Language and appearance choices stay in browser
+storage. The owner's personal phone is not published.
+
+Set the restricted Maps browser key and public Formspree form ID via the repository
+Actions secrets shown in `.env.example`. Vite embeds both in the site; never use a
+private credential for either setting.
 
 ## Owner dashboard
 
