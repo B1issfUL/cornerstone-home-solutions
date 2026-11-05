@@ -57,7 +57,7 @@
   transition: background-color 400ms ease;
 }
 .chrome-environment canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
-.chrome-environment[data-render-state='fallback'] canvas { display: none; }
+.chrome-environment:not([data-render-state='ready']) canvas { visibility: hidden; }
 .header { background: var(--chrome-header); backdrop-filter: blur(22px); }
 .header-inner { max-width: 1440px; height: 84px; gap: 24px; }
 .brand-name { letter-spacing: 0; font-size: 1rem; }

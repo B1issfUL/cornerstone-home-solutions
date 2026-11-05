@@ -166,7 +166,6 @@ export default function ChromeEnvironment() {
       host.dataset.renderState = 'fallback';
       return undefined;
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, lowPower ? 1 : 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.autoClear = false;
     renderer.domElement.className = 'chrome-scene';
@@ -255,9 +254,14 @@ export default function ChromeEnvironment() {
     let smoothX = 0; let smoothY = 0;
     let frame = 0; let lastTime = 0; let motionTime = 0; let lastRenderTime = 0;
     let needsRender = true;
+    let needsSize = true;
+    let contextLost = false;
+    let lastWidth = 0;
+    let lastHeight = 0;
+    let lastRatio = 0;
 
     const requestRender = () => {
-      if (!disposed && ready && !frame && !document.hidden && host.dataset.renderState === 'ready') {
+      if (!disposed && ready && !frame && !document.hidden && !contextLost) {
         frame = requestAnimationFrame(render);
       }
     };
@@ -270,9 +274,15 @@ export default function ChromeEnvironment() {
       requestRender();
     };
     const syncSize = () => {
+      needsSize = false;
       const { width, height } = host.getBoundingClientRect();
-      if (!width || !height) return;
-      renderer.setSize(width, height, false);
+      if (!width || !height) return false;
+      const ratio = Math.min(window.devicePixelRatio || 1, lowPower ? 1 : 1.5);
+      if (width === lastWidth && height === lastHeight && ratio === lastRatio) return true;
+      lastWidth = width;
+      lastHeight = height;
+      lastRatio = ratio;
+      renderer.setDrawingBufferSize(width, height, ratio);
       renderer.getDrawingBufferSize(gemUniforms.uRes.value);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
@@ -293,23 +303,31 @@ export default function ChromeEnvironment() {
       fragments.forEach(({ mesh }, i) => { mesh.visible = !(mobile || lowPower) || i < 5; });
       moteGeometry.setDrawRange(0, mobile ? Math.min(12, moteCount) : moteCount);
       moteUniforms.uScale.value = height * renderer.getPixelRatio() * 0.11;
-      needsRender = true;
-      requestRender();
+      return true;
     };
 
+    // Resizing clears the canvas. Only mutate its buffer immediately before a draw.
+    const invalidateSize = () => { needsSize = true; needsRender = true; requestRender(); };
     const onScroll = () => { scrollTarget = window.scrollY; requestRender(); };
     const onContextLost = (event) => {
       event.preventDefault();
+      contextLost = true;
       host.dataset.renderState = 'fallback';
       cancelAnimationFrame(frame);
       frame = 0;
     };
-    const resizeObserver = new ResizeObserver(syncSize);
+    const onContextRestored = () => {
+      contextLost = false;
+      lastWidth = 0;
+      host.dataset.renderState = 'loading';
+      invalidateSize();
+    };
+    const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(invalidateSize) : null;
     const themeObserver = new MutationObserver(syncTheme);
 
     const render = (now) => {
       frame = 0;
-      if (disposed) return;
+      if (disposed || contextLost) return;
       const still = reducedMotion.matches || Boolean(navigator.connection?.saveData);
       const mixTarget = dark ? 1 : 0;
       const mixing = Math.abs(plateUniforms.uMix.value - mixTarget) > 0.002;
@@ -317,6 +335,8 @@ export default function ChromeEnvironment() {
       // Below the hero the plate sits behind frosted sections, so 30 FPS is enough there.
       const throttled = lowPower || mobile || window.scrollY > window.innerHeight * 0.9;
       if (throttled && now - lastRenderTime < 1000 / 30) { requestRender(); return; }
+      if (needsSize && !syncSize()) return;
+      if (!lastWidth) return;
       lastRenderTime = now;
       const dt = Math.min((now - (lastTime || now)) / 1000, 0.05);
       lastTime = now;
@@ -354,6 +374,7 @@ export default function ChromeEnvironment() {
 
       renderer.clear();
       renderer.render(scene, camera);
+      if (host.dataset.renderState !== 'ready') host.dataset.renderState = 'ready';
       host.dataset.scrollRotation = progress.toFixed(3);
       needsRender = false;
       if (!still || mixing) requestRender();
@@ -375,21 +396,21 @@ export default function ChromeEnvironment() {
         syncTheme();
         plateUniforms.uMix.value = dark ? 1 : 0;
         host.appendChild(renderer.domElement);
-        host.dataset.renderState = 'ready';
         ready = true;
-        resizeObserver.observe(host);
-        syncSize();
-        requestRender();
+        resizeObserver?.observe(host);
+        invalidateSize();
       })
       .catch(() => { if (!disposed) host.dataset.renderState = 'fallback'; });
 
     renderer.domElement.addEventListener('webglcontextlost', onContextLost);
+    renderer.domElement.addEventListener('webglcontextrestored', onContextRestored);
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', invalidateSize, { passive: true });
     const onMotion = () => { needsRender = true; requestRender(); };
     const onVisibility = () => {
       if (document.hidden) { cancelAnimationFrame(frame); frame = 0; }
-      else { lastTime = performance.now(); onMotion(); }
+      else { lastTime = performance.now(); invalidateSize(); }
     };
     reducedMotion.addEventListener('change', onMotion);
     navigator.connection?.addEventListener?.('change', onMotion);
@@ -401,13 +422,15 @@ export default function ChromeEnvironment() {
       disposed = true;
       cancelAnimationFrame(frame);
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', invalidateSize);
       reducedMotion.removeEventListener('change', onMotion);
       navigator.connection?.removeEventListener?.('change', onMotion);
       document.removeEventListener('visibilitychange', onVisibility);
       systemDark.removeEventListener('change', syncTheme);
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
+      renderer.domElement.removeEventListener('webglcontextrestored', onContextRestored);
       themeObserver.disconnect();
-      resizeObserver.disconnect();
+      resizeObserver?.disconnect();
       disposables.forEach((item) => item.dispose());
       renderer.dispose();
       if (ready) renderer.domElement.remove();
